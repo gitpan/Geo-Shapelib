@@ -1,0 +1,14 @@
+Revision history for Perl extension Geo::Shapelib.
+
+0.01  Thu Aug 24 13:48:52 2000
+	- original version; created by h2xs 1.20 with options
+		-n Shape shapelib-1.2.8/shapefil
+0.02  Fri Aug 25 14:29:26 EEST 2000
+	- save implemented
+0.03  released Sep 13. 2001
+	- changes from Quinn Hart <qjhart@ucdavis.edu>, see README.Debian
+	- included the debian files into MANIFEST
+0.04  released Mar 4 2003
+	- changes from Leif Pedersen <pedersen@meridian-enviro.com>
+0.05  released Oct 20 2003
+	- as Geo::Shapelib in CPAN

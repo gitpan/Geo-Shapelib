@@ -1,0 +1,12 @@
+Changes
+Copying
+MANIFEST
+README
+example/masspntz.dbf
+example/masspntz.shp
+example/masspntz.shx
+typemap
+Makefile.PL
+test.pl
+Shapelib.pm
+Shapelib.xs
