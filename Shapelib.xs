@@ -364,9 +364,9 @@ DBFRead(hDBF, bForceStrings)
 		if (!(hv2 = newHV())) goto BREAK;
 		for (field = 0; field < num_fields; field++) {
 			char field_name[12], *field_type;
-			int nothing1, nothing2, iType;	
+			int nWidth, nDecimals, iType;	
 
-			iType = DBFGetFieldInfo(hDBF, field, field_name, &nothing1, &nothing2); 
+			iType = DBFGetFieldInfo(hDBF, field, field_name, &nWidth, &nDecimals); 
 
 			/* Force Type to String */
 			if (1 == bForceStrings)
@@ -386,7 +386,12 @@ DBFRead(hDBF, bForceStrings)
 				field_type = "Invalid";
 			}
 
-			if (!(sv = newSVpv(field_type, 0))) goto BREAK;
+			/*if (!(sv = newSVpv(field_type, 0))) goto BREAK;*/
+			if (nDecimals) {
+				if (!(sv = newSVpvf("%s:%i:%i",field_type,nWidth,nDecimals))) goto BREAK;
+			} else {
+				if (!(sv = newSVpvf("%s:%i",field_type,nWidth))) goto BREAK;
+			}
 			hv_store(hv2, field_name, strlen(field_name), sv, 0);
 		}
 		if (!(sv = newRV_noinc((SV*) hv2))) goto BREAK;
@@ -398,9 +403,9 @@ DBFRead(hDBF, bForceStrings)
 			if (!(hv2 = newHV())) goto BREAK;
 			for (field = 0; field < num_fields; field++) {
 				char field_name[12];
-				int nothing1, nothing2, iType;	
+				int nWidth, nDecimals, iType;	
 
-				iType = DBFGetFieldInfo(hDBF, field, field_name, &nothing1, &nothing2); 
+				iType = DBFGetFieldInfo(hDBF, field, field_name, &nWidth, &nDecimals); 
 
 				/* Force Type to String */
 				if (1 == bForceStrings)

@@ -3,7 +3,7 @@ package Geo::Shapelib;
 use strict;
 use Carp;
 use vars qw($VERSION @ISA @EXPORT %EXPORT_TAGS @EXPORT_OK $AUTOLOAD);
-use vars qw(%ShapeTypes %PartTypes %ft2sqlt);
+use vars qw(%ShapeTypes %PartTypes);
 
 require Exporter;
 require DynaLoader;
@@ -11,7 +11,7 @@ use AutoLoader 'AUTOLOAD';
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = '0.11';
+$VERSION = '0.12';
 
 bootstrap Geo::Shapelib $VERSION;
 
@@ -49,24 +49,19 @@ bootstrap Geo::Shapelib $VERSION;
 # Create the SUBROUTINES FOR ShapeTypes and PartTypes
 # We could prefix these with SHPT_ and SHPP_ respectively
 {
-  my %typeval = (map(uc,reverse(%ShapeTypes)),map(uc,reverse(%PartTypes)));
+    my %typeval = (map(uc,reverse(%ShapeTypes)),map(uc,reverse(%PartTypes)));
 
-  for my $datum (keys %typeval) {
-    no strict "refs";       # to register new methods in package
-    *$datum = sub { $typeval{$datum}; }
-  }
+    for my $datum (keys %typeval) {
+	no strict "refs";       # to register new methods in package
+	*$datum = sub { $typeval{$datum}; }
+    }
 }
-
-%ft2sqlt = ('String' => 'text',
-	    'Integer' => 'int',
-	    'Double' => 'float',
-	    'Invalid' => 'text');
 
 # Add Extended Exports
 %EXPORT_TAGS = ('constants' => [ map(uc,values(%ShapeTypes)),
-				     map(uc,values(%PartTypes))
-				   ],
-		    'types' =>[ qw(%ShapeTypes %PartTypes) ] );
+				 map(uc,values(%PartTypes))
+				 ],
+		'types' =>[ qw(%ShapeTypes %PartTypes) ] );
 $EXPORT_TAGS{all}=[ @{ $EXPORT_TAGS{constants} },
 		    @{ $EXPORT_TAGS{types} } ];
 
@@ -83,69 +78,104 @@ Geo::Shapelib - Perl extension for reading and writing shapefiles as defined by 
 
 =head1 SYNOPSIS
 
-    use Geo::Shapelib;
+    use Geo::Shapelib qw/:all/;
 
 or
 
     use Geo::Shapelib qw/:all/;
 
-    my $shape = new Geo::Shapelib;
-    foreach my $i (0..10) {
-        push @{$shape->{Shapes}},{SHPType=>POINT,
-				  ShapeID=>$i++,
-				  Vertices=>[[$i,$i,0,0]]
-				 };
-      }
+    my $shape = new Geo::Shapelib { 
+        Name => 'stations',
+        Shapetype => POINT,
+        FieldNames => ['Name','Code','Founded'];
+        FieldTypes => ['String:50','String:10','Integer:8'];
+    };
+
+    while (<DATA>) {
+        chomp;
+        my($station,$code,$founded,$x,$y) = split /\|/;
+        push @{$shape->{Shapes}},{ Vertices => [[$x,$y,0,0]] };
+        push @{$shape->{ShapeRecords}}, [$station,$code,$founded];
+    }
+
+    $shape->save();
 
 
 =head1 DESCRIPTION
 
 This is a library for reading, creating, and writing shapefiles as
 defined by ESRI(r) using Perl.  The Perl code uses Frank Warmerdam's
-Shapefile C Library. Get it from
-http://gdal.velocet.ca/projects/shapelib/index.html
+Shapefile C Library (http://shapelib.maptools.org/). The library
+is included in this distribution.
 
 Currently no methods exist for populating an empty Shape. You need
-to do it in your own code. This is the HOWTO:
+to do it in your own code. This is how:
 
-First you create the shapefile object:
+First you include the module into your code. If you want to define the
+shape type using its name, import all:
 
-    $shape = new Geo::Shapelib;
+    use Geo::Shapelib qw/:all/;
 
-the set its attributes:
+Create the shapefile object and specify its name and type:
 
-    $shape->{Name} to be the name (path) of the shapefile, it may contain
-    an extension. You may also use the argument in the save method.
-
-    $shape->{Shapetype} to be the (integer) denoting the shapetype. Look
-    into this file or some other doc for the numbers.
-
-don't care about these attributes:
-
-    $shape->{NShapes} the number of shapes in your object. Shapefile
-    is a collection of shapes. This is automatically deduced from the
-    Shapes array.
-
-    $shape->{MinBounds} 
-
-    $shape->{MaxBounds}
-
-then create shapes and put them into the shape
-
-    for many times {
-        make $s, a new shape
-        push @{$shape->{Shapes}}, $s;
+    $shape = new Geo::Shapelib { 
+        Name => <filename>, 
+        Shapetype => <type from the list>,
+        FieldNames => <field name list>,
+        FieldTypes => <field type list>
     }
 
-how to create $s? It is a hash.
+The name (filename, may include path) of the shapefile, the extension
+is not used (it is stripped in the save method).
 
-set
+The shape type is an integer. This module defines shape type names as
+constants (see below).
 
-    $s->{SHPType} to be the type of the shape (this needs to be the
-    same as the type of the shape, i.e., of the object?)
+The field name list is an array reference of the names of the data
+items assigned to each shape.
 
-    $s->{ShapeId} may be left undefined. The save method sets it to
-    the index in the Shapes array.
+The field type list is an array reference of the types of the data
+items. Field type is either 'Integer', 'Double', or 'String'.
+
+The types may have optional 'width' and 'decimals' fields defined,
+like this:
+
+    'Integer[:width]' defaults: width = 10
+    'Double[:width[:decimals]]' defaults: width = 10, decimals = 4
+    'String[:width]' defaults: width = 255
+
+There are some other attributes which can be defined in the
+constructor (see below), they are rarely needed. The shape object will
+need or get a couple of other attributes as well. They should be
+treated as private:
+
+    $shape->{NShapes} is the number of shapes in your
+    object. Shapefile is a collection of shapes. This is automatically
+    deduced from the Shapes array.
+
+    $shape->{MinBounds} is set by shapelib C functions.
+
+    $shape->{MaxBounds} is set by shapelib C functions.
+
+Create the shapes and respective shape records and put them into the
+shape:
+
+    for many times {
+        make $s, a new shape as a reference to a hash
+        push @{$shape->{Shapes}}, $s;
+	make $r, a shape record as a reference to an array
+	push @{$shape->{ShapeRecords}}, $r;
+    }
+
+how to create $s? It is a (reference to an) hash.
+
+set:
+
+    $s->{Vertices} this is a reference to an array of arrays of four
+    values, one for each vertex: x, y, z, and m of the vertex. There
+    should be at least one vertex in $s. Point has only one vertex.
+
+this is often not used:
 
     $s->{Parts} this is a reference to an array of arrays of two
     values, one for each part: the index of the first vertex in the
@@ -154,68 +184,26 @@ set
     if the shape is not Multipatch. You may leave this value
     undefined.
 
-    $s->{Vertices} this is a reference to an array of arrays of four
-    values, one for each vertex: x, y, z, and m of the vertex. There
-    should be at least one vertex in $s. Point has only one vertex.
+forget these:
+
+    $s->{ShapeId} may be left undefined. The save method sets it to
+    the index in the Shapes array. Instead create and use an id field
+    in the record.
 
     $s->{NParts} and $s->{NVertices} may be set but that is usually
     not necessary since they are calculated in the save method. You
     only need to set these if you want to save less parts or vertices
-    than there are actually in the Parts or Vertices arrays.
+    than there actually are in the Parts or Vertices arrays.
 
-Then you need to have at least some data assigned to each shape.
+    $s->{SHPType} is the type of the shape and it is automatically set
+    to $shape->{Shapetype} unless defined (which you should not do)
 
-    $self->{FieldNames} is a reference to the names of the data items,
-    i.e., an array.
+The shape record is simply an array reference, for example:
 
-    $self->{FieldTypes} is a reference to the types of the data items,
-    i.e., and array. Type is either 'Integer', 'Double', or 'String'.
+    $r = [item1,item2,item3,...];
 
-    The Types may have optional 'width' and 'decimals' fields defined,
-    like: 
-        'Integer[:width]'            defaults: width = 10
-        'Double[:width[:decimals]]'  defaults: width = 10, decimals = 4
-        'String[:width]'             defaults: width = 255
-
-populate the data table:
-
-    for my $i (0..$self->{NShapes}-1) {
-        $self->{ShapeRecords}->[$i] = [item1,item2,item3,...];
-    }
-
-That's all. Then save it and start your shapefile viewer to look at the result.
-
-An example:
-
-    $shape = new Geo::Shapelib;
-
-    $shape->{Shapetype} = 1;
-
-    $shape->{FieldNames} = ['StationName'];
-    $shape->{FieldTypes} = ['String:60'];
-
-    while (<DATA>) {
-        chomp;
-        ($station,$x,$y) = split /\|/;
-        push @{$shape->{Shapes}}, {
-                SHPType=>1,
-                Vertices=>[[$x,$y]]
-	};
-        push @{$shape->{ShapeRecords}}, [$station];
-    }
-
-    $shape->save('stations');
-
-    __DATA__
-    Helsinki-Vantaan Lentoasema|3387419|6692222
-    Helsinki Kaisaniemi        |3385926|6675529
-    Hyvinkää Mutila            |3379813|6722622
-    Nurmijärvi Rajamäki        |3376486|6715764
-    Vihti Maasoja              |3356766|6703481
-    Porvoo Järnböle            |3426574|6703254
-    Porvoon Mlk Bengtsby       |3424354|6684723
-    Orimattila Käkelä          |3432847|6743998
-    Tuusula Ruotsinkylä        |3388723|6696784
+That's all. Then save it and start your shapefile viewer to look at
+the result.
 
 =head1 EXPORT
 
@@ -257,70 +245,144 @@ This one creates a new, blank Perl shapefile object:
 
 {<options>} is optional in both cases
 
-=item <options>:
+=item Options:
 
-CombineVertices:
+Name:
 
-    Default 1, CombineVertices makes each part an array of two elements
+    Default is "shapefile". The filename (if given) becomes the name
+    for the shapefile unless overridden by this.
 
-UnhashFields:
+Shapetype:
 
-    Default 1, Makes $self's attributes FieldNames, FieldTypes, and ShapeRecords refs to arrays
+    Default "POINT". The type of the shapes. (All non-null shapes in a
+    shapefile are required to be of the same shape type.)
 
-LoadAll:
+FieldNames:
 
-    Default 1, Reads shapes into $self automatically using the get_shape($shape_index) method
+    Default is [].
+
+FieldTypes:
+
+    Default is [].
 
 ForceStrings:
 
-    Default 0, If 1, sets all FieldTypes to string, may be useful if values are very large ints
+    Default is 0. If 1, sets all FieldTypes to string, may be useful
+    if values are very large ints
+
+When a shapefile is read from files they end up in a bit different
+kind of data structure than what is expected by the save method for
+example and what is described above. These flags enable the
+conversion, they are not normally needed.
+
+CombineVertices:
+
+    Default is 1. CombineVertices makes each part an array of two elements.
+
+UnhashFields:
+
+    Default is 1. Makes $self's attributes FieldNames, FieldTypes refs
+    to lists, and ShapeRecords a list of lists.
+
+LoadAll:
+
+    Default is 1. Reads shapes into $self automatically in the
+    constructor using the get_shape($shape_index) method
+
 
 =cut
 
 sub new {
 	my $package = shift;
+	my $filename;
+	my $options = shift;
+	unless (ref $options) {
+	    $filename = $options;
+	    $options = shift;
+	}
+
 	my $self = {};
 	bless $self => (ref($package) or $package);
 
-	my $options = shift;
-	return $self unless defined $options;
+	$self->{Name} = $filename if $filename;
 
-	$self->{Name} = $options unless ref $options;
+	my %defaults = ( Name => 'shapefile',
+			 Shapetype => 'POINT',
+			 FieldNames => [],
+			 FieldTypes => [],
+			 CombineVertices => 1, 
+			 UnhashFields => 1, 
+			 LoadAll => 1, 
+			 ForceStrings => 0 );
 
-	$self->{Options} = {CombineVertices => 1, UnhashFields => 1, LoadAll => 1, ForceStrings => 0};
-	my $options = shift unless ref $options;
-	if ($options) {
-	    for (keys %{$self->{Options}}) {
-		$self->{Options}->{$_} = $options->{$_} if defined $options->{$_};
+	for (keys %defaults) {
+	    next if defined $self->{$_};
+	    $self->{$_} = $defaults{$_};
+	}
+	
+	if (ref $options) {
+	    for (keys %defaults) {
+		next unless defined $options->{$_};
+		$self->{$_} = $options->{$_};
 	    }
 	}
+	
+	return $self unless $filename;
+
+#	print "\n\n";
+#	for (keys %$self) {
+#	    print "$_ $self->{$_}\n";
+#	}
 
 	# Read the specified file
 
 	# Get 'FieldTypes' and 'ShapeRecords' from the dbf
-	my $dbf_handle = DBFOpen($self->{Name}, 'rb') or return undef;
-	my $dbf = DBFRead($dbf_handle, $self->{Options}{ForceStrings});
+	my $dbf_handle = DBFOpen($filename, 'rb');
+	unless ($dbf_handle) {
+	    carp("DBFOpen $filename failed!");
+	    return undef;
+	}
+	my $dbf = DBFRead($dbf_handle, $self->{ForceStrings});
 	DBFClose($dbf_handle);
 	return undef unless $dbf;  # Here, not above, so the dbf always gets closed.
 	@$self{keys %$dbf} = values %$dbf;
 
 	# Get 'NShapes', 'Shapetype', 'MinBounds', and 'MaxBounds'
-	$self->{SHPHandle} = SHPOpen($self->{Name}, 'rb') or return undef;
-	my $info = SHPGetInfo($self->{SHPHandle}) or return undef;  # DESTROY closes SHPHandle
+	$self->{SHPHandle} = SHPOpen($filename, 'rb');
+	unless ($self->{SHPHandle}) {
+	    carp("SHPOpen $filename failed!");
+	    return undef;
+	}
+	my $info = SHPGetInfo($self->{SHPHandle});  # DESTROY closes SHPHandle
+	unless ($info) {
+	    carp("SHPGetInfo failed!");
+	    return undef;
+	}
 	@$self{keys %$info} = values %$info;
 	$self->{ShapetypeString} = $ShapeTypes{ $self->{Shapetype} };
 
-	if($self->{Options}{UnhashFields}) {
-		$self->{FieldNames} = [keys %{$self->{FieldTypes}}];
-		$self->{FieldTypes} = [values %{$self->{FieldTypes}}];
-		my $tmp = [];
-		foreach my $record (@{$self->{ShapeRecords}}) {
-			push @$tmp, [ @$record{ @{$self->{FieldNames}} } ];
+	if($self->{UnhashFields}) {
+#	    print "unhashing\n";
+	    my $keys = [];
+	    my $values = [];
+	    while (my($key,$value) = each %{$self->{FieldTypes}}) {
+		push @$keys,$key;
+		push @$values,$value;
+	    }
+	    $self->{FieldNames} = $keys;
+	    $self->{FieldTypes} = $values;
+	    my $tmp = [];
+	    for my $record (@{$self->{ShapeRecords}}) {
+		my $values = [];
+		for (keys %$record) {
+		    push @$values, $record->{$_};
 		}
-		$self->{ShapeRecords} = $tmp;
+		push @$tmp,$values;
+	    }
+	    push @{$self->{ShapeRecords}}, $tmp;
 	}
 
-	if($self->{Options}{LoadAll}) {
+	if($self->{LoadAll}) {
 		for (my $which = 0; $which < $self->{NShapes}; $which++) {
 			my $shape = $self->get_shape($which) or return undef;
 			push @{$self->{Shapes}}, $shape;
@@ -328,6 +390,40 @@ sub new {
 	}
 
 	return $self;
+}
+
+sub set_sizes {
+    my($self) = @_;
+    $self->{NShapes} = @{$self->{Shapes}} unless defined $self->{NShapes};
+    for my $i (0..$self->{NShapes}-1) {
+	my $s = $self->{Shapes}->[$i];
+	if (defined($s->{SHPType})) {
+	    if ($s->{SHPType} != 0 and $s->{SHPType} != $self->{Shapetype}) {
+		carp "WARNING: All non-null shapes in a shapefile are required to be of the same shape type.";
+	    }
+	} else {
+	    $s->{SHPType} = $self->{Shapetype};
+	}
+	my $nParts =  exists $s->{Parts} ? @{$s->{Parts}} : 0;
+	if (defined $s->{NParts}) {
+	    if ($s->{NParts} > $nParts) {
+		carp "WARNING: given NParts is larger than the actual number of Parts";
+	    } else {
+		$nParts = $s->{NParts};
+	    }
+	}
+	$s->{NParts} = $nParts;
+	my $nVertices =  exists $s->{Vertices} ? @{$s->{Vertices}} : 0;
+	if (defined $s->{NVertices}) {
+	    if ($s->{NVertices} > $nVertices) {
+		carp "WARNING: given NVertices is larger than the actual number of Vertices";
+	    } else {
+		$nVertices = $s->{NVertices};
+	    }
+	}
+	$s->{NVertices} = $nVertices;
+	$s->{ShapeId} = defined $s->{ShapeId} ? $s->{ShapeId} : $i;
+    }
 }
 
 =pod
@@ -352,37 +448,12 @@ sub save {
     $shapefile =~ s/\.\w+$//;
     my $handle = SHPCreate($shapefile, $self->{Shapetype});
     croak "SHPCreate failed" unless $handle;
-    $self->{NShapes} = @{$self->{Shapes}} unless defined $self->{NShapes};
+    $self->set_sizes();
     for my $i (0..$self->{NShapes}-1) {
-	my $s = $self->{Shapes}->[$i]; 
-#	print "\n";
-#	for (keys %$s) {
-#	    print "$_ = $s->{$_}\n";
-#	    if ($s->{$_} and ref($s->{$_}) eq 'ARRAY') {
-#		my $n = @{$s->{$_}};
-#		print "$n\n";
-#	    }
-#	}
-	my $nParts =  exists $s->{Parts} ? @{$s->{Parts}} : 0;
-	if (exists $s->{NParts}) {
-	    if ($s->{NParts} > $nParts) {
-		carp "WARNING: given NParts is larger than the actual number of Parts";
-	    } else {
-		$nParts = $s->{NParts};
-	    }
-	}
-	my $nVertices =  exists $s->{Vertices} ? @{$s->{Vertices}} : 0;
-	if (exists $s->{NVertices}) {
-	    if ($s->{NVertices} > $nVertices) {
-		carp "WARNING: given NVertices is larger than the actual number of Vertices";
-	    } else {
-		$nVertices = $s->{NVertices};
-	    }
-	}
-	my $id = exists $s->{ShapeId} ? $s->{ShapeId} : $i;
-	my $shape = _SHPCreateObject($s->{SHPType}, $id, 
-				     $nParts, $s->{Parts}, 
-				     $nVertices, $s->{Vertices});
+	my $s = $self->{Shapes}->[$i];
+	my $shape = _SHPCreateObject($s->{SHPType}, $s->{ShapeId}, 
+				     $s->{NParts}, $s->{Parts}, 
+				     $s->{NVertices}, $s->{Vertices});
 	croak "SHPCreateObject failed" unless $shape;
 	SHPWriteObject($handle, -1, $shape);
 	SHPDestroyObject($shape);
@@ -441,7 +512,7 @@ sub save {
 		  last SWITCH; 
 	      }
 	  }
-	    croak "DBFWriteAttribute failed" if $ret == -1;
+	    croak "DBFWriteAttribute(field = $fn[$f], ftype = $ftypes[$f], value = $rec[$f]) failed" unless $ret;
 	}
 	last unless $ret;
     }
@@ -465,80 +536,107 @@ sub dump {
 
 	my $old_select;
 	if (defined $file) {
-		if (not defined ref $file) {
+		if (not ref $file) {
 			# $file is a name that we'll convert to a file handle
 			# ref.  Passing open a scalar makes it close when the
 			# scaler is destroyed.
 			my $fh;
-			return undef unless open $fh, ">$file";
+			unless (open $fh, ">$file") {
+			    carp("$file: $!"),
+			    return undef;
+			}
 			$file = $fh;
 		}
 		return undef unless ref($file) eq 'GLOB';
 		$old_select = select($file);
 	}
 
+	$self->set_sizes;
+
 	printf "Name:  %s\n", ($self->{Name} or '(none)');
-	printf "Shapetype:  $self->{Shapetype} ($self->{ShapetypeString})\n";
-	printf "MinBounds:  %11f %11f %11f %11f\n", @{$self->{MinBounds}};
-	printf "MaxBounds:  %11f %11f %11f %11f\n", @{$self->{MaxBounds}};
-	if($self->{Options}{UnhashFields}) {
-		print "FieldNames:  ", join(', ', @{$self->{FieldNames}}), "\n";
-		print "FieldTypes:  ", join(', ', @{$self->{FieldTypes}}), "\n";
+	print "Shape type:  $self->{Shapetype} ($ShapeTypes{$self->{Shapetype}})\n";
+	printf "Min bounds:  %11f %11f %11f %11f\n", @{$self->{MinBounds}} if $self->{MinBounds};
+	printf "Max bounds:  %11f %11f %11f %11f\n", @{$self->{MaxBounds}} if $self->{MaxBounds};
+	my @FieldNames;
+	my @FieldTypes;
+	if(ref($self->{FieldTypes}) eq 'ARRAY') {
+	    @FieldNames = @{$self->{FieldNames}};
+	    @FieldTypes = @{$self->{FieldTypes}};
 	} else {
-		print "FieldTypes:  ", join(', ', %{$self->{FieldTypes}}), "\n";
+	    while (my($key,$value) = each %{$self->{FieldTypes}}) {
+		push @FieldNames,$key;
+		push @FieldTypes,$value;
+	    }
 	}
-	print "NShapes:  $self->{NShapes}\n";
+	print "Field names:  ", join(', ', @FieldNames), "\n";
+	print "Field types:  ", join(', ', @FieldTypes), "\n";
+	print "Number of shapes:  $self->{NShapes}\n";
 
 	my $sindex = 0;
 	my $smax = $self->{NShapes};
 	while($sindex < $smax) {
 		my $shape;
 
-		if($self->{Options}{LoadAll}) {
+		if($self->{LoadAll}) {
 			$shape = $self->{Shapes}[$sindex];
 		} else {
 			$shape = $self->get_shape($sindex) or return undef;
 		}
 
-		print "Begin shape $sindex of $smax\n";
-		print "\tShapeId: $shape->{ShapeId}\n";
-		print "\tSHPType: $shape->{SHPType} ($shape->{SHPTypeString})\n";
-		printf "\tMinBounds:  %11f %11f %11f %11f\n", @{$shape->{MinBounds}};
-		printf "\tMaxBounds:  %11f %11f %11f %11f\n", @{$shape->{MaxBounds}};
-		if($self->{Options}{UnhashFields}) {
-			print "\tShapeRecords:  ", join(', ', @{$shape->{ShapeRecords}}), "\n";
+		print "Begin shape ",$sindex+1," of $smax\n";
+		print "\tShape id: $shape->{ShapeId}\n";
+		print "\tShape type: $shape->{SHPType} ($ShapeTypes{$shape->{SHPType}})\n";
+		printf "\tMin bounds:  %11f %11f %11f %11f\n", @{$shape->{MinBounds}} if $shape->{MinBounds};
+		printf "\tMax bounds:  %11f %11f %11f %11f\n", @{$shape->{MaxBounds}} if $shape->{MaxBounds};
+		my $r = $self->{ShapeRecords}->[$sindex];
+		my @r;
+		if(ref($r) eq 'ARRAY') {
+		    @r = @$r;
 		} else {
-			print "\tShapeRecords:  ", join(', ', %{$shape->{ShapeRecords}}), "\n";
+		    for (@FieldNames) {
+			push @r, $r->{$_};
+		    }
 		}
+		print "\tShape record:  ", join(', ', @r), "\n";
 
-		my $pindex = 0;
-		my $pmax = $shape->{NParts};
-		while($pindex < $pmax) {
+		if ($shape->{NParts}) {
+
+		    my $pindex = 0;
+		    my $pmax = $shape->{NParts};
+		    while($pindex < $pmax) {
 			my $part = $shape->{Parts}[$pindex];
-			print "\tBegin part $pindex of $pmax\n";
-
-			if($self->{Options}{CombineVertices}) {
-				print "\t\tPartType:  $part->[1] ($part->[2])\n";
-				my $vindex = $part->[0];
-				my $vmax = $shape->{Parts}[$pindex+1][0];
-				$vmax = $shape->{NVertices} unless defined $vmax;
-				while($vindex < $vmax) {
-					printf "\t\tVertex:  %11f %11f %11f %11f\n", @{$shape->{Vertices}[$vindex]};
-					$vindex++;
-				}
+			print "\tBegin part ",$pindex+1," of $pmax\n";
+			
+			if($self->{CombineVertices}) {
+			    print "\t\tPartType:  $part->[1] ($part->[2])\n";
+			    my $vindex = $part->[0];
+			    my $vmax = $shape->{Parts}[$pindex+1][0];
+			    $vmax = $shape->{NVertices} unless defined $vmax;
+			    while($vindex < $vmax) {
+				printf "\t\tVertex:  %11f %11f %11f %11f\n", @{$shape->{Vertices}[$vindex]};
+				$vindex++;
+			    }
 			} else {
-				print "\t\tPartId:  $part->{PartId}\n";
-				print "\t\tPartType:  $part->{PartType} ($part->{PartTypeString})\n";
-				foreach my $vertex (@{$part->{Vertices}}) {
-					printf "\t\tVertex:  %11f %11f %11f %11f\n", @$vertex;
-				}
+			    print "\t\tPart id:  $part->{PartId}\n";
+			    print "\t\tPart type:  $part->{PartType} ($PartTypes{$part->{PartType}})\n";
+			    for my $vertex (@{$part->{Vertices}}) {
+				printf "\t\tVertex:  %11f %11f %11f %11f\n", @$vertex;
+			    }
 			}
-
-			print "\tEnd part $pindex of $pmax\n";
+			
+			print "\tEnd part ",$pindex+1," of $pmax\n";
 			$pindex++;
+		    }
+
+		} else {
+
+		    for my $vertex (@{$shape->{Vertices}}) {
+			printf "\t\tVertex:  %11f %11f %11f %11f\n", @$vertex;
+		    }
+
 		}
 
-		print "End shape $sindex of $smax\n";
+		print "End shape ",$sindex+1," of $smax\n";
 		$sindex++;
 	}
 
@@ -546,21 +644,19 @@ sub dump {
 	return 1;
 }
 
-# XXX: Doc this method
+# this method reads one shape from the shapefile into the Perl object
+
 sub get_shape {
 	my ($self, $which) = @_;
 
-	my $shape = SHPReadObject($self->{SHPHandle}, $which, $self->{Options}{CombineVertices}?1:0) or return undef;
-	$shape->{SHPTypeString} = $ShapeTypes{ $shape->{SHPType} };
+	my $shape = SHPReadObject($self->{SHPHandle}, $which, $self->{CombineVertices}?1:0) or return undef;
 	$shape->{ShapeRecords} = $self->{ShapeRecords}[$which];
 
-	foreach my $part (@{$shape->{Parts}}) {
-		if($self->{Options}{CombineVertices}) {
-			# CombineVertices makes each part an array of two elements
-			$part->[2] = $PartTypes{ $part->[1] };
-		} else {
-			$part->{PartTypeString} = $PartTypes{ $part->{PartType} };
-		}
+	for my $part (@{$shape->{Parts}}) {
+	    if($self->{CombineVertices}) {
+		# CombineVertices makes each part an array of two elements
+		$part->[2] = $PartTypes{ $part->[1] };
+	    }
 	}
 
 	return $shape;
@@ -577,7 +673,7 @@ __END__
 
 =head1 AUTHOR
 
-Ari Jolma, ari.jolma@hut.fi
+Ari Jolma, ari.jolma@tkk.fi
 
 =head1 LIMITATIONS
 

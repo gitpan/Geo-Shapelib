@@ -29,3 +29,14 @@ Revision history for Perl extension Geo::Shapelib.
 0.11  released November 15 2004
 	- ShapeID, NParts, NVertices optional (they are set in save method)
 	- Removed the DB method
+0.12  released January 8 2005
+	- bug fix: $self->{Options} gets set in all cases
+	- Fieldwidths in dbf files are used
+	- rewrote if($self->{Options}{UnhashFields}) in new method
+	- set_sizes method
+	- failure of DBFWriteAttribute gets correctly tested
+	- many bug fixes in dump method
+	- brush up of the man page
+	- new parameters for the constructor
+	- SHPType optional
+	- test.pl rewritten

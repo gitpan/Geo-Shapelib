@@ -18,60 +18,61 @@ print "ok 1\n";
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
 
-$shape = new Geo::Shapelib;
+my $shapefile = 'example/test';
 
-$shape->{Shapetype} = 1;
-
-$shape->{FieldNames} = ['Name','Value'];
-$shape->{FieldTypes} = ['String:50','Double'];
+my $shape = new Geo::Shapelib { 
+    Name => $shapefile,
+    Shapetype => POINT,
+    FieldNames => ['Name','Code','Founded'],
+    FieldTypes => ['String:50','String:10','Integer:8']
+    };
 
 while (<DATA>) {
     chomp;
-    ($station,$x,$y) = split /\|/;
+    ($station,$code,$founded,$x,$y) = split /\|/;
     push @{$shape->{Shapes}}, {
-	SHPType=>1,
 	Vertices=>[[$x,$y]]
 	};
-    push @{$shape->{ShapeRecords}}, [$station,$i];
+    push @{$shape->{ShapeRecords}}, [$station,$code,$founded];
 }
 
-my $shapefile = 'example/stations';
-
-$shape->save($shapefile);
-
-print "ok 2\n";
+$shape->save();
 
 $shape = new Geo::Shapelib $shapefile;
 
-print "ok 3\n";
+$shape->dump('dump1');
 
-$shapefile = 'example/masspntz';
+$shape = new Geo::Shapelib 'example/stations', {Name => 'example/test'};
 
-#my $shape = new Geo::Shapelib $shapefile,{LoadAll=>0, ForceStrings => 1};
+$shape->dump('dump2');
 
-$shape = new Geo::Shapelib $shapefile;
+$shape = new Geo::Shapelib 'example/test', {UnhashFields=>0};
 
-print "ok 4\n";
+$shape->dump('dump3');
 
-#$shape->dump();
+for (1..3) {
+    open F,"dump$_" or die $!;
+    @{$d[$_]} = <F>;
+    close F;
+}
+$ok = 1;
+for (0..$#{$d[1]}) {
+#    print "$d[1]->[$_]$d[2]->[$_]$d[3]->[$_]\n";
+    $ok = 0 if $d[1]->[$_] ne $d[2]->[$_] or $d[1]->[$_] ne $d[3]->[$_];
+}
+print $ok ? "ok 2\n" : "not ok 2\n";
 
-$shapefile = 'example/test';
-
-$shape->save($shapefile);
-
-print "ok 5\n";
-
-# not bother to check the files more...
+#system "rm -f dump?";
 
 
 
 __DATA__
-Helsinki-Vantaan Lentoasema|3387419|6692222
-Helsinki Kaisaniemi        |3385926|6675529
-Hyvinkää Mutila            |3379813|6722622
-Nurmijärvi Rajamäki        |3376486|6715764
-Vihti Maasoja              |3356766|6703481
-Porvoo Järnböle            |3426574|6703254
-Porvoon Mlk Bengtsby       |3424354|6684723
-Orimattila Käkelä          |3432847|6743998
-Tuusula Ruotsinkylä        |3388723|6696784
+Helsinki-Vantaan Lentoasema|HVL|19780202|3387419|6692222
+Helsinki Kaisaniemi        |HK|19580201|3385926|6675529
+Hyvinkää Mutila            |HM|19630302|3379813|6722622
+Nurmijärvi Rajamäki        |HR|19340204|3376486|6715764
+Vihti Maasoja              |VM|19230502|3356766|6703481
+Porvoo Järnböle            |PJ|19450202|3426574|6703254
+Porvoon Mlk Bengtsby       |PMB|19670202|3424354|6684723
+Orimattila Käkelä          |OK|19560202|3432847|6743998
+Tuusula Ruotsinkylä        |TR|19750402|3388723|6696784

@@ -6,6 +6,9 @@ TODO
 example/masspntz.dbf
 example/masspntz.shp
 example/masspntz.shx
+example/stations.dbf
+example/stations.shp
+example/stations.shx
 typemap
 Makefile.PL
 test.pl
@@ -33,7 +36,6 @@ shapelib/contrib/makefile.vc
 shapelib/libtool
 shapelib/mkinstalldirs
 shapelib/README
-shapelib/shprewind
 shapelib/dbfadd.c
 shapelib/dbfcreate.c
 shapelib/dbfdump.c
