@@ -33,6 +33,9 @@
  * SHPGeo must be compiled with -DPROJ4 support
  *
  * $Log: shpproj.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.9  2002/01/15 14:37:08  warmerda
  * upgrade to use proj_api.h
  *

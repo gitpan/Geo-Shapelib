@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shprewind.c,v 1.2 2002/04/10 17:23:11 warmerda Exp $
+ * $Id: shprewind.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $
  *
  * Project:  Shapelib
  * Purpose:  Utility to validate and reset the winding order of rings in
@@ -35,6 +35,9 @@
  ******************************************************************************
  *
  * $Log: shprewind.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.2  2002/04/10 17:23:11  warmerda
  * copy from source to destination now
  *

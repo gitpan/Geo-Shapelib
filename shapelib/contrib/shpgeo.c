@@ -32,6 +32,9 @@
  * use -DPROJ4 to compile in Projection support
  *
  * $Log: shpgeo.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:56  ajolma
+ * Imported sources
+ *
  * Revision 1.8  2002/01/15 14:36:56  warmerda
  * upgrade to use proj_api.h
  *

@@ -26,6 +26,9 @@
  *
  *
  * $Log: shpwkb.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:56  ajolma
+ * Imported sources
+ *
  * Revision 1.1  1999/05/26 02:29:36  candrsn
  * OGis Well Known Binary test program (output only)
  *

@@ -19,3 +19,5 @@ Revision history for Perl extension Geo::Shapelib.
 	- change suggested by Stephen Woodbridge <woodbri@swoodbridge.com>
 	  ("it would be nice to be able to define the size of the the DBF fields")
 	- changes to shputils.c (#include <stdlib.h>,int findunit(char *unit);)
+0.08  released May 14 2004
+	- notes on installation in Windows from daniel.babault@mbda.fr

@@ -10,7 +10,12 @@ foreach (@incdirs) {
 WriteMakefile(
 	      NAME      => 'Geo::Shapelib::shputils',
 	      INC	=> $incs,
+
+# for GNU Linux use this:
 	      DEFINE    => '-ggdb -Wall -DDEBUG',
+# for W2k Visual Studio 6 use this:
+#	      DEFINE    => '-ggdb -DDEBUG',
+
 	      clean     => {'FILES' => 'libshp$(LIB_EXT)'},
 	      );
 
@@ -23,7 +28,12 @@ all :: static
 static :: libshp$(LIB_EXT)
 
 libshp$(LIB_EXT): $(O_FILES)
+
+# for GNU Linux use this:
 	$(AR) cr libshp$(LIB_EXT) $(O_FILES)
+# for W2k Visual Studio 6 use this:
+#	$(AR) /OUT:libshp$(LIB_EXT) $(O_FILES)
+
 	$(RANLIB) libshp$(LIB_EXT)
 ';
 }

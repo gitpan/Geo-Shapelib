@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfadd.c,v 1.7 2002/01/15 14:36:07 warmerda Exp $
+ * $Id: dbfadd.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $
  *
  * Project:  Shapelib
  * Purpose:  Sample application for adding a record to an existing .dbf file.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: dbfadd.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.7  2002/01/15 14:36:07  warmerda
  * updated email address
  *
@@ -55,7 +58,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: dbfadd.c,v 1.7 2002/01/15 14:36:07 warmerda Exp $";
+  "$Id: dbfadd.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $";
 
 #include "shapefil.h"
 #include <math.h>

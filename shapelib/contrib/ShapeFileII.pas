@@ -1,6 +1,6 @@
 {
 /******************************************************************************
- * $Id: ShapeFileII.pas,v 1.2 2002/01/21 14:09:26 warmerda Exp $
+ * $Id: ShapeFileII.pas,v 1.1.1.1 2004/01/21 12:37:56 ajolma Exp $
  *
  * Project:  Shapelib
  * Purpose:  Delphi Pascal interface to Shapelib.
@@ -35,6 +35,9 @@
  ******************************************************************************
  *
  * $Log: ShapeFileII.pas,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:56  ajolma
+ * Imported sources
+ *
  * Revision 1.2  2002/01/21 14:09:26  warmerda
  * Fixed name.
  *

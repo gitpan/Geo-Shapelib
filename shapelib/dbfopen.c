@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.48 2003/03/10 14:51:27 warmerda Exp $
+ * $Id: dbfopen.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.48  2003/03/10 14:51:27  warmerda
  * DBFWrite* calls now return FALSE if they have to truncate
  *
@@ -183,7 +186,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: dbfopen.c,v 1.48 2003/03/10 14:51:27 warmerda Exp $";
+  "$Id: dbfopen.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $";
 
 #include "shapefil.h"
 

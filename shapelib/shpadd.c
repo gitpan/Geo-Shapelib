@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpadd.c,v 1.13 2002/01/15 14:36:07 warmerda Exp $
+ * $Id: shpadd.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $
  *
  * Project:  Shapelib
  * Purpose:  Sample application for adding a shape to a shapefile.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shpadd.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.13  2002/01/15 14:36:07  warmerda
  * updated email address
  *
@@ -73,7 +76,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shpadd.c,v 1.13 2002/01/15 14:36:07 warmerda Exp $";
+  "$Id: shpadd.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $";
 
 #include <stdlib.h>
 #include <string.h>

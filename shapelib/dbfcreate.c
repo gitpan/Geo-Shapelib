@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfcreate.c,v 1.6 2002/01/15 14:36:07 warmerda Exp $
+ * $Id: dbfcreate.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $
  *
  * Project:  Shapelib
  * Purpose:  Sample application for creating a new .dbf file.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: dbfcreate.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.6  2002/01/15 14:36:07  warmerda
  * updated email address
  *
@@ -52,7 +55,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: dbfcreate.c,v 1.6 2002/01/15 14:36:07 warmerda Exp $";
+  "$Id: dbfcreate.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $";
 
 #include <stdlib.h>
 #include <string.h>

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpdump.c,v 1.10 2002/04/10 16:59:29 warmerda Exp $
+ * $Id: shpdump.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $
  *
  * Project:  Shapelib
  * Purpose:  Sample application for dumping contents of a shapefile to 
@@ -35,6 +35,9 @@
  ******************************************************************************
  *
  * $Log: shpdump.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.10  2002/04/10 16:59:29  warmerda
  * added -validate switch
  *
@@ -65,7 +68,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shpdump.c,v 1.10 2002/04/10 16:59:29 warmerda Exp $";
+  "$Id: shpdump.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $";
 
 #include "shapefil.h"
 

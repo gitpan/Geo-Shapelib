@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shptree.c,v 1.9 2003/01/28 15:53:41 warmerda Exp $
+ * $Id: shptree.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of quadtree building and searching functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shptree.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.9  2003/01/28 15:53:41  warmerda
  * Avoid build warnings.
  *
@@ -64,7 +67,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shptree.c,v 1.9 2003/01/28 15:53:41 warmerda Exp $";
+  "$Id: shptree.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $";
 
 #include "shapefil.h"
 

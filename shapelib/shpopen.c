@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.39 2002/08/26 06:46:56 warmerda Exp $
+ * $Id: shpopen.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.39  2002/08/26 06:46:56  warmerda
  * avoid c++ comments
  *
@@ -159,7 +162,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shpopen.c,v 1.39 2002/08/26 06:46:56 warmerda Exp $";
+  "$Id: shpopen.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $";
 
 #include "shapefil.h"
 

@@ -27,6 +27,9 @@
  *
  *
  * $Log: shpgeo.h,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.3  2002/01/15 14:36:56  warmerda
  * upgrade to use proj_api.h
  *

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpcreate.c,v 1.5 2002/01/15 14:36:07 warmerda Exp $
+ * $Id: shpcreate.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $
  *
  * Project:  Shapelib
  * Purpose:  Sample application for creating a new shapefile.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shpcreate.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.5  2002/01/15 14:36:07  warmerda
  * updated email address
  *
@@ -49,7 +52,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shpcreate.c,v 1.5 2002/01/15 14:36:07 warmerda Exp $";
+  "$Id: shpcreate.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $";
 
 #include "shapefil.h"
 

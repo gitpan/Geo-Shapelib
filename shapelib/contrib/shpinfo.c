@@ -27,6 +27,9 @@
  * 
  *
  * $Log: shpinfo.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.3  2002/04/15 21:33:03  warmerda
  * Avoid dereference arrays.
  *

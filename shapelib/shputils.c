@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shputils.c,v 1.7 2003/02/25 17:20:22 warmerda Exp $
+ * $Id: shputils.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $
  *
  * Project:  Shapelib
  * Purpose:  
@@ -53,6 +53,9 @@
  ******************************************************************************
  *
  * $Log: shputils.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.7  2003/02/25 17:20:22  warmerda
  * Set psCShape to NULL after SHPDestroyObject() to avoid multi-frees of
  * the same memory ... as submitted by Fred Fox.
@@ -80,7 +83,7 @@
 int findunit(char *unit);
 
 static char rcsid[] = 
-  "$Id: shputils.c,v 1.7 2003/02/25 17:20:22 warmerda Exp $";
+  "$Id: shputils.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $";
 
 #include "shapefil.h"
 #include "string.h"

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shptreedump.c,v 1.7 2002/04/10 16:59:12 warmerda Exp $
+ * $Id: shptreedump.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $
  *
  * Project:  Shapelib
  * Purpose:  Mainline for creating and dumping an ASCII representation of
@@ -35,6 +35,9 @@
  ******************************************************************************
  *
  * $Log: shptreedump.c,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.7  2002/04/10 16:59:12  warmerda
  * fixed email
  *
@@ -59,7 +62,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shptreedump.c,v 1.7 2002/04/10 16:59:12 warmerda Exp $";
+  "$Id: shptreedump.c,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $";
 
 #include "shapefil.h"
 

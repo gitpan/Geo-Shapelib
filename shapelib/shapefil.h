@@ -2,7 +2,7 @@
 #define _SHAPEFILE_H_INCLUDED
 
 /******************************************************************************
- * $Id: shapefil.h,v 1.26 2002/09/29 00:00:08 warmerda Exp $
+ * $Id: shapefil.h,v 1.1.1.1 2004/01/21 12:37:55 ajolma Exp $
  *
  * Project:  Shapelib
  * Purpose:  Primary include file for Shapelib.
@@ -37,6 +37,9 @@
  ******************************************************************************
  *
  * $Log: shapefil.h,v $
+ * Revision 1.1.1.1  2004/01/21 12:37:55  ajolma
+ * Imported sources
+ *
  * Revision 1.26  2002/09/29 00:00:08  warmerda
  * added FTLogical and logical attribute read/write calls
  *
