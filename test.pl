@@ -22,22 +22,17 @@ $shape = new Geo::Shapelib;
 
 $shape->{Shapetype} = 1;
 
-$shape->{FieldNames} = ['ID','Name','Value'];
-$shape->{FieldTypes} = ['Integer','String:50','Double'];
+$shape->{FieldNames} = ['Name','Value'];
+$shape->{FieldTypes} = ['String:50','Double'];
 
-$i = 0;
 while (<DATA>) {
     chomp;
     ($station,$x,$y) = split /\|/;
     push @{$shape->{Shapes}}, {
-	SHPType=>1, 
-	ShapeId=>$i, 
-	NParts=>0, 
-	NVertices=>1, 
+	SHPType=>1,
 	Vertices=>[[$x,$y]]
 	};
-    push @{$shape->{ShapeRecords}}, [$i,$station,$i];
-    $i++;
+    push @{$shape->{ShapeRecords}}, [$station,$i];
 }
 
 my $shapefile = 'example/stations';

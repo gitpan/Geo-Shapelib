@@ -11,7 +11,7 @@ use AutoLoader 'AUTOLOAD';
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = '0.10';
+$VERSION = '0.11';
 
 bootstrap Geo::Shapelib $VERSION;
 
@@ -93,8 +93,6 @@ or
     foreach my $i (0..10) {
         push @{$shape->{Shapes}},{SHPType=>POINT,
 				  ShapeID=>$i++,
-				  NParts=>0,
-				  NVertices=>1,
 				  Vertices=>[[$i,$i,0,0]]
 				 };
       }
@@ -146,23 +144,24 @@ set
     $s->{SHPType} to be the type of the shape (this needs to be the
     same as the type of the shape, i.e., of the object?)
 
-    $s->{ShapeId} this is probably best to let be an integer which you
-    increment each time by one starting from zero
-
-    $s->{NParts} to be the number of how many parts want into this
-    shape, may be zero
+    $s->{ShapeId} may be left undefined. The save method sets it to
+    the index in the Shapes array.
 
     $s->{Parts} this is a reference to an array of arrays of two
     values, one for each part: the index of the first vertex in the
     vertex array, i.e. the number of vertices in all previous parts in
-    this shape; and the type of the part (not the shapetype): Ring if
-    the shape is not Multipatch?
-
-    $s->{NVertices} to be the number of how many vertices there are in
-    your shape (point has only one vertex), at least one
+    this shape; and the type of the part (not the shapetype): Ring (5)
+    if the shape is not Multipatch. You may leave this value
+    undefined.
 
     $s->{Vertices} this is a reference to an array of arrays of four
-    values, one for each vertex: x, y, z, and m of the vertex
+    values, one for each vertex: x, y, z, and m of the vertex. There
+    should be at least one vertex in $s. Point has only one vertex.
+
+    $s->{NParts} and $s->{NVertices} may be set but that is usually
+    not necessary since they are calculated in the save method. You
+    only need to set these if you want to save less parts or vertices
+    than there are actually in the Parts or Vertices arrays.
 
 Then you need to have at least some data assigned to each shape.
 
@@ -192,22 +191,17 @@ An example:
 
     $shape->{Shapetype} = 1;
 
-    $shape->{FieldNames} = ['ID','Station'];
-    $shape->{FieldTypes} = ['Integer','String:60'];
+    $shape->{FieldNames} = ['StationName'];
+    $shape->{FieldTypes} = ['String:60'];
 
-    $i = 0;
     while (<DATA>) {
         chomp;
         ($station,$x,$y) = split /\|/;
         push @{$shape->{Shapes}}, {
-                SHPType=>1, 
-                ShapeId=>$i, 
-                NParts=>0, 
-                NVertices=>1, 
+                SHPType=>1,
                 Vertices=>[[$x,$y]]
 	};
-        push @{$shape->{ShapeRecords}}, [$i,$station];
-        $i++;
+        push @{$shape->{ShapeRecords}}, [$station];
     }
 
     $shape->save('stations');
@@ -361,9 +355,34 @@ sub save {
     $self->{NShapes} = @{$self->{Shapes}} unless defined $self->{NShapes};
     for my $i (0..$self->{NShapes}-1) {
 	my $s = $self->{Shapes}->[$i]; 
-	my $shape = _SHPCreateObject($s->{SHPType}, $s->{ShapeId}, 
-				     $s->{NParts}, $s->{Parts}, 
-				     $s->{NVertices}, $s->{Vertices});
+#	print "\n";
+#	for (keys %$s) {
+#	    print "$_ = $s->{$_}\n";
+#	    if ($s->{$_} and ref($s->{$_}) eq 'ARRAY') {
+#		my $n = @{$s->{$_}};
+#		print "$n\n";
+#	    }
+#	}
+	my $nParts =  exists $s->{Parts} ? @{$s->{Parts}} : 0;
+	if (exists $s->{NParts}) {
+	    if ($s->{NParts} > $nParts) {
+		carp "WARNING: given NParts is larger than the actual number of Parts";
+	    } else {
+		$nParts = $s->{NParts};
+	    }
+	}
+	my $nVertices =  exists $s->{Vertices} ? @{$s->{Vertices}} : 0;
+	if (exists $s->{NVertices}) {
+	    if ($s->{NVertices} > $nVertices) {
+		carp "WARNING: given NVertices is larger than the actual number of Vertices";
+	    } else {
+		$nVertices = $s->{NVertices};
+	    }
+	}
+	my $id = exists $s->{ShapeId} ? $s->{ShapeId} : $i;
+	my $shape = _SHPCreateObject($s->{SHPType}, $id, 
+				     $nParts, $s->{Parts}, 
+				     $nVertices, $s->{Vertices});
 	croak "SHPCreateObject failed" unless $shape;
 	SHPWriteObject($handle, -1, $shape);
 	SHPDestroyObject($shape);
@@ -525,98 +544,6 @@ sub dump {
 
 	select $old_select if defined $old_select;
 	return 1;
-}
-
-=cut
-
-=pod
-
-=head2 SQL Database methods
-
-OpenGIS Simple Features Specification for SQL compliant database
-methods to come! :) ..maybe..
-
-=cut
-
-# The datamodel:
-#
-# CREATE TABLE "layers" (
-#        "name" text,
-#        "lid" int4,
-# );
-# CREATE UNIQUE INDEX "layers_key1" on "layers" ( "name");
-# CREATE UNIQUE INDEX "layers_key2" on "layers" ( "lid" );
-# CREATE SEQUENCE "lid" ;
-# CREATE TABLE "shapes" (
-#         "lid" int4,
-#         "sid" int4,
-#         "type" int
-# );
-# CREATE UNIQUE INDEX "shapes_index" on "shapes" ( "lid", "sid" );
-# CREATE TABLE "parts" (
-#         "lid" int4,
-#         "sid" int4,
-#         "pid" int4,
-#         "type" int,
-#         "vid" int4,
-#         "x" float8,
-#         "y" float8,
-#         "z" float8,
-#         "m" float8
-# );
-# CREATE UNIQUE INDEX "parts_index" on "parts" ( "lid", "sid", "pid", "vid" );
-
-
-sub sql {
-    my($dbh,$sql) = @_;
-    my $sth = $dbh->prepare($sql);
-    if (!$sth or !$sth->execute) {
-	$sql .= "\n";
-	$sql .= $dbh->errstr unless $sth;
-	$sql .= $sth->errstr if $sth;
-	$sql .= "\n";
-	croak $sql;
-    }
-    return $sth;
-}
-
-sub to_db {
-    my($self,$dbh) = @_;
-    my $table = (splitpath($self->{Name}))[2];
-    my $sth = sql("insert into layers (name,lid) values ('$table',(select nextval('lid')))");
-    return unless $sth;
-    $sth = sql("select lid from layers where name='$self->{Name}'");
-    return unless $sth;
-    my $lid = $sth->fetchrow_array;
-    
-    my @fn = @{$self->{FieldNames}};
-    my @ft = @{$self->{FieldTypes}};
-    my $fields;
-    for my $i (0..$#fn) {
-	$fields .= "$fn[$i] $ft2sqlt{$fn[$i]}";
-	$fields .= ', ' if $i < $#fn;
-    }
-     
-    $sth = sql("create table $self->{Name} (sid int, $fields)");
-    return unless $sth;
-
-    $fields = join(',',@fn);
-
-    my $part = 0;
-    for my $i (0..$self->{NShapes}-1) {
-	my $s = $self->{Shapes}->[$i];
-	$sth = sql("insert into shapes (lid,sid,type) values ($lid,$s->{ShapeId},$s->{SHPType})");
-	return unless $sth;
-	my $rec = join("','",@{$self->{ShapeRecords}->[$i]});
-	$sth = sql("insert into $self->{Name} (sid,$fields) values ($s->{ShapeId},'$rec'})");
-	return unless $sth;
-	for my $j (0..$s->{NVertices}-1) {
-	    my $v = join(',',@{$s->{Vertices}->[$j]});
-	    $sth = sql("insert into parts (lid,sid,pid,type,vid,x,y,z,m) values " .
-		       "($lid,$s->{ShapeId},$part,$s->{Parts}->[$part]->[1],$j,$v)");
-	    return unless $sth;
-	}
-    } 
 }
 
 # XXX: Doc this method

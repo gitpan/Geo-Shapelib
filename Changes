@@ -24,5 +24,8 @@ Revision history for Perl extension Geo::Shapelib.
 0.09  released May 27 2004
 	- DBFWrite.. bugs fixed (thanks Joaquin Ferrero)
 0.10  released August 20 2004
-	- ForceStrings and other options for the new method
+	- ForceStrings and other options for the new method (thanks Massimiliano )
 	- save bails out if shape is empty
+0.11  released November 15 2004
+	- ShapeID, NParts, NVertices optional (they are set in save method)
+	- Removed the DB method

@@ -4,6 +4,8 @@
 
 #include <shapelib/shapefil.h>
 
+#undef min
+#define min(x, y) ((x)<(y) ? (x) : (y))
 
 MODULE = Geo::Shapelib		PACKAGE = Geo::Shapelib		
 
@@ -241,7 +243,6 @@ _SHPCreateObject(nSHPType, iShape, nParts, Parts, nVertices, Vertices)
 		double *padfY = NULL;
 		double *padfZ = NULL;
 		double *padfM = NULL;
-		int i;
 		AV *p = NULL;		
 		AV *v = NULL;
 		if (nParts) p = (AV *)SvRV(Parts);
@@ -253,15 +254,22 @@ _SHPCreateObject(nSHPType, iShape, nParts, Parts, nVertices, Vertices)
 		if (!(padfZ = calloc(nVertices, sizeof(double)))) goto BREAK;
 		if (!(padfM = calloc(nVertices, sizeof(double)))) goto BREAK;
 		if (nParts && (SvTYPE(p) != SVt_PVAV)) {
-			fprintf(stderr,"Parts is not a list\n", i);
+			fprintf(stderr,"Parts is not a list\n");
 			goto BREAK;
 		}
 		if (v && (SvTYPE(v) != SVt_PVAV)) {
-			fprintf(stderr,"Vertices is not a list\n", i);
+			fprintf(stderr,"Vertices is not a list\n");
 			goto BREAK;
 		}
-		for (i = 0; i < nParts; i++) {
+		int i;
+		int n = nParts;
+		if (p) n = min(n,av_len(p));
+		for (i = 0; i < n; i++) {
 			SV **pa = av_fetch(p, i, 0);
+			if (!pa) {
+				fprintf(stderr,"NULL value in Parts array at index %i\n", i);
+				goto BREAK;
+			}
 			AV *pi = (AV *)SvRV(*pa);
 			if (SvTYPE(pi) == SVt_PVAV) {
 				SV **ps = av_fetch(pi, 0, 0);
@@ -269,12 +277,18 @@ _SHPCreateObject(nSHPType, iShape, nParts, Parts, nVertices, Vertices)
 				panPartStart[i] = SvIV(*ps);
 				panPartType[i] = SvIV(*pt);
 			} else {
-				fprintf(stderr,"Parts is not a list of lists\n", i);
+				fprintf(stderr,"Parts is not a list of lists\n");
 				goto BREAK;
 			}
 		}
-		for (i = 0; i < nVertices; i++) {
+		n = nVertices;
+		if (p) n = min(n,av_len(p));
+		for (i = 0; i < n; i++) {
 			SV **va = av_fetch(v, i, 0);
+			if (!va) {
+				fprintf(stderr,"NULL value in Vertices array at index %i\n", i);
+				goto BREAK;
+			}
 			AV *vi =(AV *)SvRV(*va);
 			if (SvTYPE(vi) == SVt_PVAV) {
 				SV **x = av_fetch(vi, 0, 0);
@@ -292,7 +306,7 @@ _SHPCreateObject(nSHPType, iShape, nParts, Parts, nVertices, Vertices)
 				else
 					padfM[i] = 0;
 			} else {
-				fprintf(stderr,"Vertices is not a list of lists\n", i);
+				fprintf(stderr,"Vertices is not a list of lists\n");
 				goto BREAK;
 			}
 		}
