@@ -11,7 +11,7 @@ use AutoLoader 'AUTOLOAD';
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = '0.08';
+$VERSION = '0.09';
 
 bootstrap Geo::Shapelib $VERSION;
 
@@ -379,19 +379,19 @@ sub save {
 	    next unless $ftypes[$f];
 	  SWITCH: {
 	      if ($ftypes[$f] == 1) { 
-		  $ret = DBFWriteStringAttribute($handle, $i, $f, $rec[$f]) if $rec[$f];
+		  $ret = DBFWriteStringAttribute($handle, $i, $f, $rec[$f]) if exists $rec[$f];
 		  last SWITCH; 
 	      }
 	      if ($ftypes[$f] == 2) { 
-		  $ret = DBFWriteIntegerAttribute($handle, $i, $f, $rec[$f]) if $rec[$f];
+		  $ret = DBFWriteIntegerAttribute($handle, $i, $f, $rec[$f]) if exists $rec[$f];
 		  last SWITCH; 
 	      }
 	      if ($ftypes[$f] == 3) { 
-		  $ret = DBFWriteDoubleAttribute($handle, $i, $f, $rec[$f]) if $rec[$f];
+		  $ret = DBFWriteDoubleAttribute($handle, $i, $f, $rec[$f]) if exists $rec[$f];
 		  last SWITCH; 
 	      }
 	  }
-	    croak "DBFWriteAttribute failed" unless $ret;
+	    croak "DBFWriteAttribute failed" if $ret == -1;
 	}
 	last unless $ret;
     }
