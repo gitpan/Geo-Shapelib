@@ -2,7 +2,7 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#include <libshp/shapefil.h>
+#include <shapelib/shapefil.h>
 
 
 MODULE = Geo::Shapelib		PACKAGE = Geo::Shapelib		
