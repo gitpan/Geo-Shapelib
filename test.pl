@@ -18,7 +18,7 @@ print "ok 1\n";
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
 
-my $shapefile = 'example/test';
+my $shapefile = 'test_shape';
 
 my $shape = new Geo::Shapelib { 
     Name => $shapefile,
@@ -26,6 +26,8 @@ my $shape = new Geo::Shapelib {
     FieldNames => ['Name','Code','Founded'],
     FieldTypes => ['String:50','String:10','Integer:8']
     };
+
+print "ok 2\n";
 
 while (<DATA>) {
     chomp;
@@ -36,33 +38,23 @@ while (<DATA>) {
     push @{$shape->{ShapeRecords}}, [$station,$code,$founded];
 }
 
+$shape->dump("$shapefile.dump");
+
+print "ok 3\n";
+
 $shape->save();
 
-$shape = new Geo::Shapelib $shapefile;
+print "ok 4\n";
 
-$shape->dump('dump1');
+my $shape2 = new Geo::Shapelib $shapefile;
 
-$shape = new Geo::Shapelib 'example/stations', {Name => 'example/test'};
+print "ok 5\n";
 
-$shape->dump('dump2');
+($shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 
+ $shape2->{Shapes}->[2]->{Vertices}->[0]->[1] and 
+ $shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 6722622) ? print "ok 6\n" : print "not ok 6\n";
 
-$shape = new Geo::Shapelib 'example/test', {UnhashFields=>0};
-
-$shape->dump('dump3');
-
-for (1..3) {
-    open F,"dump$_" or die $!;
-    @{$d[$_]} = <F>;
-    close F;
-}
-$ok = 1;
-for (0..$#{$d[1]}) {
-#    print "$d[1]->[$_]$d[2]->[$_]$d[3]->[$_]\n";
-    $ok = 0 if $d[1]->[$_] ne $d[2]->[$_] or $d[1]->[$_] ne $d[3]->[$_];
-}
-print $ok ? "ok 2\n" : "not ok 2\n";
-
-#system "rm -f dump?";
+system "rm -f $shapefile.*";
 
 
 

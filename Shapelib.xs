@@ -245,6 +245,8 @@ _SHPCreateObject(nSHPType, iShape, nParts, Parts, nVertices, Vertices)
 		double *padfM = NULL;
 		AV *p = NULL;		
 		AV *v = NULL;
+		int i;
+		int n;
 		if (nParts) p = (AV *)SvRV(Parts);
 		v = (AV *)SvRV(Vertices);
 		if (nParts && !(panPartStart = calloc(nParts, sizeof(int)))) goto BREAK;
@@ -261,16 +263,16 @@ _SHPCreateObject(nSHPType, iShape, nParts, Parts, nVertices, Vertices)
 			fprintf(stderr,"Vertices is not a list\n");
 			goto BREAK;
 		}
-		int i;
-		int n = nParts;
+		n = nParts;
 		if (p) n = min(n,av_len(p));
 		for (i = 0; i < n; i++) {
 			SV **pa = av_fetch(p, i, 0);
+			AV *pi;
 			if (!pa) {
 				fprintf(stderr,"NULL value in Parts array at index %i\n", i);
 				goto BREAK;
 			}
-			AV *pi = (AV *)SvRV(*pa);
+			pi = (AV *)SvRV(*pa);
 			if (SvTYPE(pi) == SVt_PVAV) {
 				SV **ps = av_fetch(pi, 0, 0);
 				SV **pt = av_fetch(pi, 1, 0);
@@ -285,11 +287,12 @@ _SHPCreateObject(nSHPType, iShape, nParts, Parts, nVertices, Vertices)
 		if (p) n = min(n,av_len(p));
 		for (i = 0; i < n; i++) {
 			SV **va = av_fetch(v, i, 0);
+			AV *vi;
 			if (!va) {
 				fprintf(stderr,"NULL value in Vertices array at index %i\n", i);
 				goto BREAK;
 			}
-			AV *vi =(AV *)SvRV(*va);
+			vi =(AV *)SvRV(*va);
 			if (SvTYPE(vi) == SVt_PVAV) {
 				SV **x = av_fetch(vi, 0, 0);
 				SV **y = av_fetch(vi, 1, 0);

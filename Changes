@@ -40,3 +40,6 @@ Revision history for Perl extension Geo::Shapelib.
 	- new parameters for the constructor
 	- SHPType optional
 	- test.pl rewritten
+0.13 released Feb 8 2005
+	- changes to Shapelib.xs to make it compile with gcc 2.96 (as
+          suggested by Greg Machala)
