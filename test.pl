@@ -23,7 +23,7 @@ $shape = new Geo::Shapelib;
 $shape->{Shapetype} = 1;
 
 $shape->{FieldNames} = ['ID','Name','Value'];
-$shape->{FieldTypes} = ['Integer','String','Double'];
+$shape->{FieldTypes} = ['Integer','String:50','Double'];
 
 $i = 0;
 while (<DATA>) {

@@ -2,6 +2,7 @@ Changes
 Copying
 MANIFEST
 README
+TODO
 example/masspntz.dbf
 example/masspntz.shp
 example/masspntz.shx
@@ -61,3 +62,4 @@ shapelib/stream1.sh
 shapelib/stream2.sh
 shapelib/README.tree
 shapelib/makefile.vc
+META.yml                                 Module meta-data (added by MakeMaker)

@@ -76,6 +76,9 @@
  * Initial revision
  */
 
+#include <stdlib.h>
+int findunit(char *unit);
+
 static char rcsid[] = 
   "$Id: shputils.c,v 1.7 2003/02/25 17:20:22 warmerda Exp $";
 
@@ -274,7 +277,7 @@ int main( int argc, char ** argv )
                 if (factor == 0)
                 {
                   if (infactor ==0)
-                  { puts("ERROR: Input unit must be defined before output unit"); exit(); }
+                  { puts("ERROR: Input unit must be defined before output unit"); exit(EXIT_FAILURE); }
                   factor=infactor/outfactor;
                 }
                 printf("Output file coordinate values will be factored by %lg\n",factor);

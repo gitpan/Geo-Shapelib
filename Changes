@@ -15,3 +15,7 @@ Revision history for Perl extension Geo::Shapelib.
 	- removed the debian files, sorry
 0.06  released Oct 22 2003
 	- included Shapelib-1.2.10 tree into the distro
+0.07  released Jan 14 2004
+	- change suggested by Stephen Woodbridge <woodbri@swoodbridge.com>
+	  ("it would be nice to be able to define the size of the the DBF fields")
+	- changes to shputils.c (#include <stdlib.h>,int findunit(char *unit);)

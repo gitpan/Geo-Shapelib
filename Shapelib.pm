@@ -11,7 +11,7 @@ use AutoLoader 'AUTOLOAD';
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 bootstrap Geo::Shapelib $VERSION;
 
@@ -172,6 +172,12 @@ Then you need to have at least some data assigned to each shape.
     $self->{FieldTypes} is a reference to the types of the data items,
     i.e., and array. Type is either 'Integer', 'Double', or 'String'.
 
+    The Types may have optional 'width' and 'decimals' fields defined,
+    like: 
+        'Integer[:width]'            defaults: width = 10
+        'Double[:width[:decimals]]'  defaults: width = 10, decimals = 4
+        'String[:width]'             defaults: width = 255
+
 populate the data table:
 
     for my $i (0..$self->{NShapes}-1) {
@@ -187,7 +193,7 @@ An example:
     $shape->{Shapetype} = 1;
 
     $shape->{FieldNames} = ['ID','Station'];
-    $shape->{FieldTypes} = ['Integer','String'];
+    $shape->{FieldTypes} = ['Integer','String:60'];
 
     $i = 0;
     while (<DATA>) {
@@ -342,21 +348,22 @@ sub save {
 	my $type = 0;
 	my $width;
 	my $decimals = 0;
+        my ($ftype, $fwidth, $fdeci) = split(/[:;,]/, $ft[$f]);
       SWITCH: {
-	  if ($ft[$f] eq 'String') { 
+	  if ($ftype eq 'String') { 
 	      $type = 1;
-	      $width = 255;	      
+	      $width = defined($fwidth)?$fwidth:255;	      
 	      last SWITCH; 
 	  }
-	  if ($ft[$f] eq 'Integer') { 
+	  if ($ftype eq 'Integer') { 
 	      $type = 2;
-	      $width = 10;
+	      $width = defined($fwidth)?$fwidth:10;
 	      last SWITCH; 
 	  }
-	  if ($ft[$f] eq 'Double') { 
+	  if ($ftype eq 'Double') { 
 	      $type = 3;
-	      $width = 10;
-	      $decimals = 4;
+	      $width = defined($fwidth)?$fwidth:10;
+	      $decimals = defined($fdeci)?$fdeci:4;
 	      last SWITCH; 
 	  }
       }

@@ -1,0 +1,7 @@
+woodbri@swoodbridge.com wrote:
+
+One additional change you might want to consider is truncate values 
+to the String width using something like:
+    @{$field_values} = map {unpack "A$width"} @{$field_values};
+before you pass it to  DBFWrite(), but this could also be left to the 
+user to get right.
