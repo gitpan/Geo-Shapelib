@@ -256,7 +256,7 @@ _SHPCreateObject(nSHPType, iShape, nParts, Parts, nVertices, Vertices)
 			fprintf(stderr,"Parts is not a list\n", i);
 			goto BREAK;
 		}
-		if (SvTYPE(v) != SVt_PVAV) {
+		if (v && (SvTYPE(v) != SVt_PVAV)) {
 			fprintf(stderr,"Vertices is not a list\n", i);
 			goto BREAK;
 		}
@@ -328,8 +328,9 @@ DBFOpen(pszDBFFile,pszAccess)
 	char *pszAccess
 
 SV * 
-DBFRead(hDBF)
+DBFRead(hDBF, bForceStrings)
 	DBFHandle hDBF
+	int bForceStrings
 	CODE:
 	{
 		HV *hv = NULL;
@@ -349,9 +350,15 @@ DBFRead(hDBF)
 		if (!(hv2 = newHV())) goto BREAK;
 		for (field = 0; field < num_fields; field++) {
 			char field_name[12], *field_type;
-			int nothing1, nothing2;
+			int nothing1, nothing2, iType;	
 
-			switch(DBFGetFieldInfo(hDBF, field, field_name, &nothing1, &nothing2)) {
+			iType = DBFGetFieldInfo(hDBF, field, field_name, &nothing1, &nothing2); 
+
+			/* Force Type to String */
+			if (1 == bForceStrings)
+				iType = FTString;
+
+			switch (iType) { 
 			  case FTString:
 				field_type = "String";
 			  break;
@@ -377,9 +384,15 @@ DBFRead(hDBF)
 			if (!(hv2 = newHV())) goto BREAK;
 			for (field = 0; field < num_fields; field++) {
 				char field_name[12];
-				int nothing1, nothing2;
+				int nothing1, nothing2, iType;	
 
-				switch(DBFGetFieldInfo(hDBF, field, field_name, &nothing1, &nothing2)) {
+				iType = DBFGetFieldInfo(hDBF, field, field_name, &nothing1, &nothing2); 
+
+				/* Force Type to String */
+				if (1 == bForceStrings)
+					iType = FTString;
+
+				switch (iType) { 
 				  case FTString:
 					if (!(sv = newSVpv((char *)DBFReadStringAttribute(hDBF,record,field),0))) goto BREAK;
 				  break;

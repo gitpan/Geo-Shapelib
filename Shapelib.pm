@@ -11,7 +11,7 @@ use AutoLoader 'AUTOLOAD';
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = '0.09';
+$VERSION = '0.10';
 
 bootstrap Geo::Shapelib $VERSION;
 
@@ -255,11 +255,31 @@ All possible exports are included.
 
 This one reads in an existing shapefile:
 
-    $shape = new Geo::Shapelib "myshapefile";
+    $shape = new Geo::Shapelib "myshapefile", {<options>};
 
 This one creates a new, blank Perl shapefile object:
 
-    $shape = new Geo::Shapelib;
+    $shape = new Geo::Shapelib {<options>};
+
+{<options>} is optional in both cases
+
+=item <options>:
+
+CombineVertices:
+
+    Default 1, CombineVertices makes each part an array of two elements
+
+UnhashFields:
+
+    Default 1, Makes $self's attributes FieldNames, FieldTypes, and ShapeRecords refs to arrays
+
+LoadAll:
+
+    Default 1, Reads shapes into $self automatically using the get_shape($shape_index) method
+
+ForceStrings:
+
+    Default 0, If 1, sets all FieldTypes to string, may be useful if values are very large ints
 
 =cut
 
@@ -268,16 +288,24 @@ sub new {
 	my $self = {};
 	bless $self => (ref($package) or $package);
 
-	$self->{Name} = shift;
-	$self->{Options} = (shift or {CombineVertices => 1, UnhashFields => 1, LoadAll => 1});
+	my $options = shift;
+	return $self unless defined $options;
 
-	return $self unless defined $self->{Name};
+	$self->{Name} = $options unless ref $options;
+
+	$self->{Options} = {CombineVertices => 1, UnhashFields => 1, LoadAll => 1, ForceStrings => 0};
+	my $options = shift unless ref $options;
+	if ($options) {
+	    for (keys %{$self->{Options}}) {
+		$self->{Options}->{$_} = $options->{$_} if defined $options->{$_};
+	    }
+	}
 
 	# Read the specified file
 
 	# Get 'FieldTypes' and 'ShapeRecords' from the dbf
 	my $dbf_handle = DBFOpen($self->{Name}, 'rb') or return undef;
-	my $dbf = DBFRead($dbf_handle);
+	my $dbf = DBFRead($dbf_handle, $self->{Options}{ForceStrings});
 	DBFClose($dbf_handle);
 	return undef unless $dbf;  # Here, not above, so the dbf always gets closed.
 	@$self{keys %$dbf} = values %$dbf;
@@ -319,15 +347,18 @@ sub new {
 The argument $shapefile is optional, the internal attribute
 ($shape->{Name}) is used if $shapefile is not specified.
 
+Extension is removed from $shapefile.
+
 =cut
 
 sub save {
     my($self,$shapefile) = @_;
-    $shapefile = $self->{Name} unless $shapefile;
+    croak "refusing to save an empty shapefile" unless ($self->{Shapes} and @{$self->{Shapes}});
+    $shapefile = $self->{Name} unless defined $shapefile;
     $shapefile =~ s/\.\w+$//;
     my $handle = SHPCreate($shapefile, $self->{Shapetype});
     croak "SHPCreate failed" unless $handle;
-    $self->{NShapes} = $#{$self->{Shapes}}+1 unless defined $self->{NShapes};
+    $self->{NShapes} = @{$self->{Shapes}} unless defined $self->{NShapes};
     for my $i (0..$self->{NShapes}-1) {
 	my $s = $self->{Shapes}->[$i]; 
 	my $shape = _SHPCreateObject($s->{SHPType}, $s->{ShapeId}, 

@@ -23,3 +23,6 @@ Revision history for Perl extension Geo::Shapelib.
 	- notes on installation in Windows from daniel.babault@mbda.fr
 0.09  released May 27 2004
 	- DBFWrite.. bugs fixed (thanks Joaquin Ferrero)
+0.10  released August 20 2004
+	- ForceStrings and other options for the new method
+	- save bails out if shape is empty

@@ -40,15 +40,35 @@ while (<DATA>) {
     $i++;
 }
 
-$shape->save('stations');
+my $shapefile = 'example/stations';
 
-my $shapefile = 'example/masspntz';
+$shape->save($shapefile);
 
-my $shape = new Geo::Shapelib($shapefile);
+print "ok 2\n";
+
+$shape = new Geo::Shapelib $shapefile;
+
+print "ok 3\n";
+
+$shapefile = 'example/masspntz';
+
+#my $shape = new Geo::Shapelib $shapefile,{LoadAll=>0, ForceStrings => 1};
+
+$shape = new Geo::Shapelib $shapefile;
+
+print "ok 4\n";
 
 #$shape->dump();
 
-$shape->save('example/test');
+$shapefile = 'example/test';
+
+$shape->save($shapefile);
+
+print "ok 5\n";
+
+# not bother to check the files more...
+
+
 
 __DATA__
 Helsinki-Vantaan Lentoasema|3387419|6692222
