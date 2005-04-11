@@ -49,3 +49,5 @@ Revision history for Perl extension Geo::Shapelib.
 	- use $shapefile instead of $shape in the docs, $shapefile is
           the whole object, $shape is either and individual shape or an index
           to an individual shape
+0.15 released Apr 11 2005
+	- fixed small bugs in 0.14

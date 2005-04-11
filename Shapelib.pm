@@ -12,7 +12,7 @@ use AutoLoader 'AUTOLOAD';
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = '0.14';
+$VERSION = '0.15';
 
 bootstrap Geo::Shapelib $VERSION;
 
@@ -478,7 +478,7 @@ sub select_vertices {
 	    $v->[$i]->[1] <= $maxy;
 	push @vertices,$i;
     }
-    $self->{Shapes}[$shape]->{SelectedVertices} = \@vertices;
+    $shape->{SelectedVertices} = \@vertices;
     return \@vertices;
 }
 
@@ -486,7 +486,7 @@ sub move_selected_vertices {
     my($self,$dx,$dy) = @_;
     for my $sindex (0..$self->{NShapes}-1) {
 	my $shape = $self->{Shapes}->[$sindex];
-	next unless @{$shape->{SelectedVertices}};
+	next unless $shape->{SelectedVertices} and @{$shape->{SelectedVertices}};
 
 	my $v = $shape->{Vertices};
 	for my $vindex (@{$shape->{SelectedVertices}}) {
