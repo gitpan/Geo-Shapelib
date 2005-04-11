@@ -2,6 +2,7 @@ package Geo::Shapelib;
 
 use strict;
 use Carp;
+use Tree::R;
 use vars qw($VERSION @ISA @EXPORT %EXPORT_TAGS @EXPORT_OK $AUTOLOAD);
 use vars qw(%ShapeTypes %PartTypes);
 
@@ -11,7 +12,7 @@ use AutoLoader 'AUTOLOAD';
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = '0.13';
+$VERSION = '0.14';
 
 bootstrap Geo::Shapelib $VERSION;
 
@@ -84,7 +85,7 @@ or
 
     use Geo::Shapelib qw/:all/;
 
-    my $shape = new Geo::Shapelib { 
+    my $shapefile = new Geo::Shapelib { 
         Name => 'stations',
         Shapetype => POINT,
         FieldNames => ['Name','Code','Founded'];
@@ -94,11 +95,11 @@ or
     while (<DATA>) {
         chomp;
         my($station,$code,$founded,$x,$y) = split /\|/;
-        push @{$shape->{Shapes}},{ Vertices => [[$x,$y,0,0]] };
-        push @{$shape->{ShapeRecords}}, [$station,$code,$founded];
+        push @{$shapefile->{Shapes}},{ Vertices => [[$x,$y,0,0]] };
+        push @{$shapefile->{ShapeRecords}}, [$station,$code,$founded];
     }
 
-    $shape->save();
+    $shapefile->save();
 
 
 =head1 DESCRIPTION
@@ -118,7 +119,7 @@ shape type using its name, import all:
 
 Create the shapefile object and specify its name and type:
 
-    $shape = new Geo::Shapelib { 
+    $shapefile = new Geo::Shapelib { 
         Name => <filename>, 
         Shapetype => <type from the list>,
         FieldNames => <field name list>,
@@ -149,22 +150,22 @@ constructor (see below), they are rarely needed. The shape object will
 need or get a couple of other attributes as well. They should be
 treated as private:
 
-    $shape->{NShapes} is the number of shapes in your
+    $shapefile->{NShapes} is the number of shapes in your
     object. Shapefile is a collection of shapes. This is automatically
     deduced from the Shapes array.
 
-    $shape->{MinBounds} is set by shapelib C functions.
+    $shapefile->{MinBounds} is set by shapelib C functions.
 
-    $shape->{MaxBounds} is set by shapelib C functions.
+    $shapefile->{MaxBounds} is set by shapelib C functions.
 
 Create the shapes and respective shape records and put them into the
 shape:
 
     for many times {
         make $s, a new shape as a reference to a hash
-        push @{$shape->{Shapes}}, $s;
+        push @{$shapefile->{Shapes}}, $s;
 	make $r, a shape record as a reference to an array
-	push @{$shape->{ShapeRecords}}, $r;
+	push @{$shapefile->{ShapeRecords}}, $r;
     }
 
 how to create $s? It is a (reference to an) hash.
@@ -237,11 +238,11 @@ All possible exports are included.
 
 This one reads in an existing shapefile:
 
-    $shape = new Geo::Shapelib "myshapefile", {<options>};
+    $shapefile = new Geo::Shapelib "myshapefile", {<options>};
 
 This one creates a new, blank Perl shapefile object:
 
-    $shape = new Geo::Shapelib {<options>};
+    $shapefile = new Geo::Shapelib {<options>};
 
 {<options>} is optional in both cases
 
@@ -269,6 +270,11 @@ ForceStrings:
 
     Default is 0. If 1, sets all FieldTypes to string, may be useful
     if values are very large ints
+
+Rtree:
+
+    Default is 0. If 1, creates an R-tree of the shapes into an
+    element Rtree. (Requires LoadAll.)
 
 When a shapefile is read from files they end up in a bit different
 kind of data structure than what is expected by the save method for
@@ -313,7 +319,8 @@ sub new {
 			 CombineVertices => 1, 
 			 UnhashFields => 1, 
 			 LoadAll => 1, 
-			 ForceStrings => 0 );
+			 ForceStrings => 0,
+			 Rtree => 0 );
 
 	for (keys %defaults) {
 	    next if defined $self->{$_};
@@ -389,7 +396,132 @@ sub new {
 		}
 	}
 
+	$self->Rtree() if $self->{Rtree};
+
 	return $self;
+}
+
+=pod
+
+=head1 METHODS
+
+=head2 Rtree and editing the shapefile
+
+Building a R-tree for the shapes:
+
+    $shapefile->Rtree();
+
+This is automatically done if Rtree-option is set when a shapefile is
+loaded from files.
+
+You can then use methods like (there are not yet any wrappers for
+these).
+
+    my @shapes;
+    $shapefile->{Rtree}->query_point(@xy,\@shapes); # or
+    $shapefile->{Rtree}->query_completely_within_rect(@rect,\@shapes); # or
+    $shapefile->{Rtree}->query_partly_within_rect(@rect,\@shapes);
+
+To get a list of shapes (indexes to the shape array), which you can
+feed for example to the select_vertices function.
+
+    for my $shape (@shapes) {
+	my $vertices = $shapefile->select_vertices($shape,@rect);
+	my $n = @$vertices;
+	print "you selected $n vertices from shape $shape\n";
+    }
+
+The shapefile object remembers the selected vertices and calling the
+function
+
+    $shapefile->move_selected_vertices($dx,$dy);
+
+moves the vertices. The bboxes of the affected shapes, and the R-tree,
+if one exists, are updated automatically. To clear all selections from
+all shapes, call:
+
+    $selected->clear_selections();
+
+=cut
+
+sub Rtree {
+    my $self = shift @_;
+    $self->{Rtree} = new Tree::R @_;
+    my $sindex;
+    for ($sindex = 0; $sindex < $self->{NShapes}; $sindex++) {
+	my $shape = $self->{Shapes}[$sindex];
+	my @rect;
+	@rect[0..1] = @{$shape->{MinBounds}}[0..1];
+	@rect[2..3] = @{$shape->{MaxBounds}}[0..1];
+	$self->{Rtree}->insert($sindex,@rect);
+    }
+}
+
+sub clear_selections {
+    my($self) = @_;
+    for my $shape (@{$self->{Shapes}}) {
+	$shape->{SelectedVertices} = [];
+    }
+}
+
+sub select_vertices {
+    my($self,$shape,$minx,$miny,$maxx,$maxy) = @_;
+    $shape = $self->{Shapes}->[$shape];
+    my $v = $shape->{Vertices};
+    my @vertices;
+    my $i;
+    for ($i = 0; $i < $shape->{NVertices}; $i++) {
+	next unless 
+	    $v->[$i]->[0] >= $minx and
+	    $v->[$i]->[0] <= $maxx and
+	    $v->[$i]->[1] >= $miny and
+	    $v->[$i]->[1] <= $maxy;
+	push @vertices,$i;
+    }
+    $self->{Shapes}[$shape]->{SelectedVertices} = \@vertices;
+    return \@vertices;
+}
+
+sub move_selected_vertices {
+    my($self,$dx,$dy) = @_;
+    for my $sindex (0..$self->{NShapes}-1) {
+	my $shape = $self->{Shapes}->[$sindex];
+	next unless @{$shape->{SelectedVertices}};
+
+	my $v = $shape->{Vertices};
+	for my $vindex (@{$shape->{SelectedVertices}}) {
+	    $v->[$vindex]->[0] += $dx;
+	    $v->[$vindex]->[1] += $dy;
+	}
+
+	my @rect;
+	for my $vertex (@{$shape->{Vertices}}) {
+	    $rect[0] = defined($rect[0]) ? min($vertex->[0],$rect[0]) : $vertex->[0];
+	    $rect[1] = defined($rect[1]) ? min($vertex->[1],$rect[1]) : $vertex->[1];
+	    $rect[2] = defined($rect[2]) ? max($vertex->[0],$rect[2]) : $vertex->[0];
+	    $rect[3] = defined($rect[3]) ? max($vertex->[1],$rect[3]) : $vertex->[1];
+	}
+
+	@{$shape->{MinBounds}}[0..1] = @rect[0..1];
+	@{$shape->{MaxBounds}}[0..1] = @rect[2..3];
+
+	next unless $self->{Rtree};
+	# update Rtree... 	
+
+	#delete $sindex from it
+	$self->{Rtree}->remove($sindex);
+
+	# add $sindex to it
+	$self->{Rtree}->insert($sindex,@rect);
+    }
+}
+
+sub min {
+    $_[0] > $_[1] ? $_[1] : $_[0];
+}
+
+sub max {
+    $_[0] > $_[1] ? $_[0] : $_[1];
 }
 
 sub set_sizes {
@@ -428,16 +560,14 @@ sub set_sizes {
 
 =pod
 
-=head1 METHODS
-
 =head2 Saving the shapefile
 
-    $shape->save($shapefile);
+    $shapefile->save($filename);
 
 The argument $shapefile is optional, the internal attribute
-($shape->{Name}) is used if $shapefile is not specified.
+($shapefile->{Name}) is used if $filename is not specified.
 
-Extension is removed from $shapefile.
+$filename may contain an extension, it is removed and .shp etc. are used instead.
 
 =cut
 
@@ -523,7 +653,7 @@ sub save {
 
 =head2 Dump
 
-$shape->dump($to);
+$shapefile->dump($to);
 
 $to can be undef (then dump uses STDOUT), filename, or reference to a
 filehandle (e.g., \*DUMP).
@@ -673,7 +803,7 @@ __END__
 
 =head1 AUTHOR
 
-Ari Jolma, ari.jolma@tkk.fi
+Ari Jolma, ari.jolma at tkk.fi
 
 =head1 LIMITATIONS
 

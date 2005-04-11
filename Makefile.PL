@@ -3,6 +3,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     'NAME'		=> 'Geo::Shapelib',
     'VERSION_FROM'	=> 'Shapelib.pm',
+    PREREQ_PM           => {Tree::R => 0.01}, # e.g., Module::Name => 1.1
 
 # next 2 lines for external libshp, uncomment if you want to use an external libshp
 #    'LIBS'		=> ['-L/usr/local/lib -lshp'], # change if you have libshp somewhere else

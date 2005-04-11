@@ -43,3 +43,9 @@ Revision history for Perl extension Geo::Shapelib.
 0.13 released Feb 8 2005
 	- changes to Shapelib.xs to make it compile with gcc 2.96 (as
           suggested by Greg Machala)
+0.14 released Apr 11 2005
+	- use Tree:R, optionally build a R-tree of the shapes
+	- new methods: clear_selections, select_vertices, move_selected_vertices
+	- use $shapefile instead of $shape in the docs, $shapefile is
+          the whole object, $shape is either and individual shape or an index
+          to an individual shape

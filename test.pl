@@ -6,7 +6,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..1\n"; }
+BEGIN { $| = 1; print "1..7\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Geo::Shapelib qw /:all/;
 $loaded = 1;
@@ -46,13 +46,15 @@ $shape->save();
 
 print "ok 4\n";
 
-my $shape2 = new Geo::Shapelib $shapefile;
+my $shape2 = new Geo::Shapelib $shapefile, {Rtree=>1};
 
 print "ok 5\n";
 
+print ((ref($shape2->{Rtree}) eq 'Tree::R') ? "ok 6\n" : (ref($shape2->{Rtree})," not ok 6\n"));
+
 ($shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 
  $shape2->{Shapes}->[2]->{Vertices}->[0]->[1] and 
- $shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 6722622) ? print "ok 6\n" : print "not ok 6\n";
+ $shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 6722622) ? print "ok 7\n" : print "not ok 7\n";
 
 system "rm -f $shapefile.*";
 
