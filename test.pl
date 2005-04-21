@@ -56,6 +56,12 @@ print ((ref($shape2->{Rtree}) eq 'Tree::R') ? "ok 6\n" : (ref($shape2->{Rtree}),
  $shape2->{Shapes}->[2]->{Vertices}->[0]->[1] and 
  $shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 6722622) ? print "ok 7\n" : print "not ok 7\n";
 
+#$shape2 = new Geo::Shapelib '../data/digiroad';
+#$shape2->Rtree;
+#$shape2->select_vertices;
+#$shape2->move_selected_vertices(1,1);
+#print "ok\n";
+
 system "rm -f $shapefile.*";
 
 

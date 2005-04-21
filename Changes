@@ -51,3 +51,6 @@ Revision history for Perl extension Geo::Shapelib.
           to an individual shape
 0.15 released Apr 11 2005
 	- fixed small bugs in 0.14
+0.16 released Apr 21 2005
+	- select_vertices more options (all, one shape, vertices)
+	- Rtree handling in move_selected_vertices

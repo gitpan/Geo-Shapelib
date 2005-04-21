@@ -12,7 +12,7 @@ use AutoLoader 'AUTOLOAD';
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = '0.15';
+$VERSION = '0.16';
 
 bootstrap Geo::Shapelib $VERSION;
 
@@ -466,9 +466,20 @@ sub clear_selections {
 
 sub select_vertices {
     my($self,$shape,$minx,$miny,$maxx,$maxy) = @_;
+    unless (defined $shape) {
+	for my $sindex (0..$self->{NShapes}-1) {
+	    $self->select_vertices($sindex);
+	}
+	return;
+    }
     $shape = $self->{Shapes}->[$shape];
-    my $v = $shape->{Vertices};
     my @vertices;
+    unless (defined $maxy) {
+	@vertices = (0..$shape->{NVertices}-1);
+	$shape->{SelectedVertices} = \@vertices;
+	return \@vertices;
+    }
+    my $v = $shape->{Vertices};
     my $i;
     for ($i = 0; $i < $shape->{NVertices}; $i++) {
 	next unless 
@@ -484,6 +495,9 @@ sub select_vertices {
 
 sub move_selected_vertices {
     my($self,$dx,$dy) = @_;
+    return unless $self->{NShapes};
+
+    my $count = 0;
     for my $sindex (0..$self->{NShapes}-1) {
 	my $shape = $self->{Shapes}->[$sindex];
 	next unless $shape->{SelectedVertices} and @{$shape->{SelectedVertices}};
@@ -504,15 +518,48 @@ sub move_selected_vertices {
 
 	@{$shape->{MinBounds}}[0..1] = @rect[0..1];
 	@{$shape->{MaxBounds}}[0..1] = @rect[2..3];
+	$count++;
+    }
 
-	next unless $self->{Rtree};
-	# update Rtree... 	
+    if ($self->{Rtree}) {
+	if ($count < 10) {
+	    for my $sindex (0..$self->{NShapes}-1) {
+		my $shape = $self->{Shapes}->[$sindex];
+		next unless $shape->{SelectedVertices} and @{$shape->{SelectedVertices}};
+		
+		# update Rtree... 	
+		
+		#delete $sindex from it
+		print STDERR "remove $sindex\n";
+		$self->{Rtree}->remove($sindex);
+	    }
+	    for my $sindex (0..$self->{NShapes}-1) {
+		my $shape = $self->{Shapes}->[$sindex];
+		next unless $shape->{SelectedVertices} and @{$shape->{SelectedVertices}};
+		
+		my @rect = (@{$shape->{MinBounds}}[0..1],@{$shape->{MaxBounds}}[0..1]);
+		
+		# update Rtree... 	
+		
+		# add $sindex to it
+		print STDERR "add $sindex\n";
+		$self->{Rtree}->insert($sindex,@rect);
+	    }
+	} else {
+	    $self->Rtree;
+	}
+    }
 
-	#delete $sindex from it
-	$self->{Rtree}->remove($sindex);
-
-	# add $sindex to it
-	$self->{Rtree}->insert($sindex,@rect);
+    $self->{MinBounds}->[0] = $self->{Shapes}->[0]->{MinBounds}->[0];
+    $self->{MinBounds}->[1] = $self->{Shapes}->[0]->{MinBounds}->[1];
+    $self->{MaxBounds}->[0] = $self->{Shapes}->[0]->{MaxBounds}->[0];
+    $self->{MaxBounds}->[1] = $self->{Shapes}->[0]->{MaxBounds}->[1];
+    for my $sindex (1..$self->{NShapes}-1) {
+	my $shape = $self->{Shapes}->[$sindex];
+	$self->{MinBounds}->[0] = min($self->{MinBounds}->[0],$shape->{MinBounds}->[0]);
+	$self->{MinBounds}->[1] = min($self->{MinBounds}->[1],$shape->{MinBounds}->[1]);
+	$self->{MaxBounds}->[0] = max($self->{MaxBounds}->[0],$shape->{MaxBounds}->[0]);
+	$self->{MaxBounds}->[1] = max($self->{MaxBounds}->[1],$shape->{MaxBounds}->[1]);
     }
 }
 
