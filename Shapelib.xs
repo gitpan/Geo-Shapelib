@@ -344,14 +344,17 @@ DBFOpen(pszDBFFile,pszAccess)
 	char *pszDBFFile
 	char *pszAccess
 
+int
+DBFGetRecordCount(hDBF)
+	DBFHandle hDBF
+
 SV * 
-DBFRead(hDBF, bForceStrings)
+ReadDataModel(hDBF, bForceStrings)
 	DBFHandle hDBF
 	int bForceStrings
 	CODE:
 	{
 		HV *hv = NULL;
-		HV *hv2 = NULL;
 		SV *sv = NULL;
 		AV *av = NULL;
 		int num_fields;
@@ -363,8 +366,6 @@ DBFRead(hDBF, bForceStrings)
 		num_fields = DBFGetFieldCount(hDBF);
 		num_records = DBFGetRecordCount(hDBF);
 
-		/* Build FieldTypes */
-		if (!(hv2 = newHV())) goto BREAK;
 		for (field = 0; field < num_fields; field++) {
 			char field_name[12], *field_type;
 			int nWidth, nDecimals, iType;	
@@ -395,15 +396,38 @@ DBFRead(hDBF, bForceStrings)
 			} else {
 				if (!(sv = newSVpvf("%s:%i",field_type,nWidth))) goto BREAK;
 			}
-			hv_store(hv2, field_name, strlen(field_name), sv, 0);
+			hv_store(hv, field_name, strlen(field_name), sv, 0);
 		}
-		if (!(sv = newRV_noinc((SV*) hv2))) goto BREAK;
-		hv_store(hv, "FieldTypes", 10, sv, 0);
 
-		/* Build fields */
+		goto DONE;
+	      BREAK:
+		fprintf(stderr,"Out of memory!\n");
+		hv = NULL;
+	      DONE:
+		RETVAL = newRV_noinc((SV *)hv);
+	}
+  OUTPUT:
+    RETVAL
+
+SV * 
+ReadData(hDBF, bForceStrings)
+	DBFHandle hDBF
+	int bForceStrings
+	CODE:
+	{
+		AV *av = NULL;
+		int num_fields;
+		int num_records;
+		int record, field;
+
+		num_fields = DBFGetFieldCount(hDBF);
+		num_records = DBFGetRecordCount(hDBF);
+
 		if (!(av = newAV())) goto BREAK;
 		for (record = 0; record < num_records; record++) {
-			if (!(hv2 = newHV())) goto BREAK;
+			HV *hv = NULL;
+			SV *sv = NULL;
+			if (!(hv = newHV())) goto BREAK;
 			for (field = 0; field < num_fields; field++) {
 				char field_name[12];
 				int nWidth, nDecimals, iType;	
@@ -426,13 +450,66 @@ DBFRead(hDBF, bForceStrings)
 				  break;
 				}
 
-				hv_store(hv2, field_name, strlen(field_name), sv, 0);
+				hv_store(hv, field_name, strlen(field_name), sv, 0);
 			}
-			if (!(sv = newRV_noinc((SV*) hv2))) goto BREAK;
+			if (!(sv = newRV_noinc((SV*) hv))) goto BREAK;
 			av_push(av, sv);
 		}
-		if (!(sv = newRV_noinc((SV*) av))) goto BREAK;
-		hv_store(hv, "ShapeRecords", 12, sv, 0);
+
+		goto DONE;
+	      BREAK:
+		fprintf(stderr,"Out of memory!\n");
+		av = NULL;
+	      DONE:
+		RETVAL = newRV_noinc((SV *)av);
+	}
+  OUTPUT:
+    RETVAL
+
+SV * 
+ReadRecord(hDBF, bForceStrings, record)
+	DBFHandle hDBF
+	int bForceStrings
+	int record
+	CODE:
+	{
+		HV *hv = NULL;
+		int num_fields;
+		int num_records;
+		int field;
+
+		num_fields = DBFGetFieldCount(hDBF);
+		num_records = DBFGetRecordCount(hDBF);
+
+		if (!(hv = newHV())) goto BREAK;
+
+		if (record >= 0 && record < num_records) {
+			SV *sv = NULL;			
+			for (field = 0; field < num_fields; field++) {
+				char field_name[12];
+				int nWidth, nDecimals, iType;	
+
+				iType = DBFGetFieldInfo(hDBF, field, field_name, &nWidth, &nDecimals); 
+
+				/* Force Type to String */
+				if (1 == bForceStrings)
+					iType = FTString;
+
+				switch (iType) { 
+				  case FTString:
+					if (!(sv = newSVpv((char *)DBFReadStringAttribute(hDBF,record,field),0))) goto BREAK;
+				  break;
+				  case FTInteger:
+					if (!(sv = newSViv(DBFReadIntegerAttribute(hDBF,record,field)))) goto BREAK;
+				  break;
+				  case FTDouble:
+					if (!(sv = newSVnv(DBFReadDoubleAttribute(hDBF,record,field)))) goto BREAK;
+				  break;
+				}
+
+				hv_store(hv, field_name, strlen(field_name), sv, 0);
+			}
+		}
 
 		goto DONE;
 	      BREAK:

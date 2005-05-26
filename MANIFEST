@@ -8,6 +8,11 @@ Makefile.PL
 test.pl
 Shapelib.pm
 Shapelib.xs
+example/xyz.dbf
+example/xyz.sbn
+example/xyz.sbx
+example/xyz.shp
+example/xyz.shx
 shapelib/ChangeLog
 shapelib/contrib/doc/shpproj.txt
 shapelib/contrib/Makefile

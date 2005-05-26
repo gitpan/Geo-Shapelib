@@ -54,3 +54,6 @@ Revision history for Perl extension Geo::Shapelib.
 0.16 released Apr 21 2005
 	- select_vertices more options (all, one shape, vertices)
 	- Rtree handling in move_selected_vertices
+0.17 released May 26 2005
+	- LoadRecords to control whether load records into Perl vars or not
+	- fixed a bug which made open, save fail

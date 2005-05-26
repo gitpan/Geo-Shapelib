@@ -6,11 +6,13 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..7\n"; }
+BEGIN { $| = 1; }
 END {print "not ok 1\n" unless $loaded;}
+
 use Geo::Shapelib qw /:all/;
+use Test::Simple tests => 13;
+
 $loaded = 1;
-print "ok 1\n";
 
 ######################### End of black magic.
 
@@ -27,8 +29,6 @@ my $shape = new Geo::Shapelib {
     FieldTypes => ['String:50','String:10','Integer:8']
     };
 
-print "ok 2\n";
-
 while (<DATA>) {
     chomp;
     ($station,$code,$founded,$x,$y) = split /\|/;
@@ -38,29 +38,65 @@ while (<DATA>) {
     push @{$shape->{ShapeRecords}}, [$station,$code,$founded];
 }
 
+ok($shape, 'new from data');
+
 $shape->dump("$shapefile.dump");
 
-print "ok 3\n";
+ok(1, 'dump');
 
 $shape->save();
 
-print "ok 4\n";
+ok(1, "save");
 
 my $shape2 = new Geo::Shapelib $shapefile, {Rtree=>1};
 
-print "ok 5\n";
+ok(ref($shape2->{Rtree}) eq 'Tree::R', "Rtree");
 
-print ((ref($shape2->{Rtree}) eq 'Tree::R') ? "ok 6\n" : (ref($shape2->{Rtree})," not ok 6\n"));
+ok($shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 
+   $shape2->{Shapes}->[2]->{Vertices}->[0]->[1] and 
+   $shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 6722622, "Rtree seems to work");
 
-($shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 
- $shape2->{Shapes}->[2]->{Vertices}->[0]->[1] and 
- $shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 6722622) ? print "ok 7\n" : print "not ok 7\n";
+$example = "example/xyz";
 
-#$shape2 = new Geo::Shapelib '../data/digiroad';
-#$shape2->Rtree;
-#$shape2->select_vertices;
-#$shape2->move_selected_vertices(1,1);
-#print "ok\n";
+$shape = new Geo::Shapelib $example;
+
+$shape->save($shapefile);
+
+for ('.shp','.dbf') {
+    @stat1 = stat $example.$_;
+    @stat2 = stat $shapefile.$_;
+    ok($stat1[7] == $stat2[7], "comp $_ files");
+}
+
+$shape = new Geo::Shapelib "example/xyz", {UnhashFields => 0};
+
+$shape->save($shapefile);
+
+for ('.shp','.dbf') {
+    @stat1 = stat $example.$_;
+    @stat2 = stat $shapefile.$_;
+    ok($stat1[7] == $stat2[7], "comp $_ files after unhash=0");
+}
+
+$shape = new Geo::Shapelib "example/xyz", {LoadRecords => 0};
+
+$shape->save($shapefile);
+
+for ('.shp','.dbf') {
+    @stat1 = stat $example.$_;
+    @stat2 = stat $shapefile.$_;
+    ok($stat1[7] == $stat2[7], "comp $_ files after loadrecords=0");
+}
+
+$shape = new Geo::Shapelib "example/xyz", {LoadRecords => 0, UnhashFields => 0};
+
+$shape->save($shapefile);
+
+for ('.shp','.dbf') {
+    @stat1 = stat $example.$_;
+    @stat2 = stat $shapefile.$_;
+    ok($stat1[7] == $stat2[7], "comp $_ files after loadrecords=0,unhash=0");
+}
 
 system "rm -f $shapefile.*";
 
