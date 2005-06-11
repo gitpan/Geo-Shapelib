@@ -117,8 +117,8 @@ SHPReadObject(hSHP, which, combine_vertices)
 		hv_store(hv, "MaxBounds", 9, sv, 0);
 
 		if (combine_vertices) {
-			/* This is the old interface, which makes a separate
-			 * array of parts and vertices */
+			/* This is the default, make a separate
+			   array of parts and vertices */
 
 			/* Make array of parts */
 			if (!(av = newAV())) goto BREAK;
@@ -264,7 +264,7 @@ _SHPCreateObject(nSHPType, iShape, nParts, Parts, nVertices, Vertices)
 			goto BREAK;
 		}
 		n = nParts;
-		if (p) n = min(n,av_len(p));
+		if (p) n = min(n,av_len(p)+1);
 		for (i = 0; i < n; i++) {
 			SV **pa = av_fetch(p, i, 0);
 			AV *pi;
@@ -284,7 +284,7 @@ _SHPCreateObject(nSHPType, iShape, nParts, Parts, nVertices, Vertices)
 			}
 		}
 		n = nVertices;
-		if (p) n = min(n,av_len(p));
+		if (v) n = min(n,av_len(v)+1);
 		for (i = 0; i < n; i++) {
 			SV **va = av_fetch(v, i, 0);
 			AV *vi;

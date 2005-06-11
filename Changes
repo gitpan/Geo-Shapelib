@@ -57,3 +57,8 @@ Revision history for Perl extension Geo::Shapelib.
 0.17 released May 26 2005
 	- LoadRecords to control whether load records into Perl vars or not
 	- fixed a bug which made open, save fail
+0.18 released June 11 2005
+	- fixed bugs pointed out by Ethan Alpert:
+	- in xs: in _CreateObject parts and vertices were not read correctly always, wrote tests for these
+	- edited pod, Parts, CombineVertices
+	- new method set_bounds

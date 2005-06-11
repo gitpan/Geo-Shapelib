@@ -10,7 +10,7 @@ BEGIN { $| = 1; }
 END {print "not ok 1\n" unless $loaded;}
 
 use Geo::Shapelib qw /:all/;
-use Test::Simple tests => 13;
+use Test::Simple tests => 15;
 
 $loaded = 1;
 
@@ -65,7 +65,7 @@ $shape->save($shapefile);
 for ('.shp','.dbf') {
     @stat1 = stat $example.$_;
     @stat2 = stat $shapefile.$_;
-    ok($stat1[7] == $stat2[7], "comp $_ files");
+    ok($stat1[7] == $stat2[7], "cmp $_ files");
 }
 
 $shape = new Geo::Shapelib "example/xyz", {UnhashFields => 0};
@@ -75,7 +75,7 @@ $shape->save($shapefile);
 for ('.shp','.dbf') {
     @stat1 = stat $example.$_;
     @stat2 = stat $shapefile.$_;
-    ok($stat1[7] == $stat2[7], "comp $_ files after unhash=0");
+    ok($stat1[7] == $stat2[7], "cmp $_ files after unhash=0");
 }
 
 $shape = new Geo::Shapelib "example/xyz", {LoadRecords => 0};
@@ -85,7 +85,7 @@ $shape->save($shapefile);
 for ('.shp','.dbf') {
     @stat1 = stat $example.$_;
     @stat2 = stat $shapefile.$_;
-    ok($stat1[7] == $stat2[7], "comp $_ files after loadrecords=0");
+    ok($stat1[7] == $stat2[7], "cmp $_ files after loadrecords=0");
 }
 
 $shape = new Geo::Shapelib "example/xyz", {LoadRecords => 0, UnhashFields => 0};
@@ -95,8 +95,37 @@ $shape->save($shapefile);
 for ('.shp','.dbf') {
     @stat1 = stat $example.$_;
     @stat2 = stat $shapefile.$_;
-    ok($stat1[7] == $stat2[7], "comp $_ files after loadrecords=0,unhash=0");
+    ok($stat1[7] == $stat2[7], "cmp $_ files after loadrecords=0,unhash=0");
 }
+
+# thanks to Ethan Alpert for this test
+$shape = new Geo::Shapelib; 
+$shape->{Name};
+$shape->{Shapetype}=5;
+$shape->{FieldNames}=['ID','Name'];
+$shape->{FieldTypes}=['Integer','String'];
+push @{$shape->{ShapeRecords}},[0,$shapefile];
+push @{$shape->{Shapes}}, {
+                SHPType=>5,
+                ShapeId=>0,
+                NParts=>2,
+                Parts=>[[0,5,'Ring'],[5,5,'Ring']],
+                NVertices=>10,
+                Vertices=>[[-1,1,0,0],[1,1,0,0],[1,-1,0,0],[-1,-1,0,0],[-1,1,0,0],[-.1,.1,0,0],[-.1,-.1,0,0],[.1,-.1,0,0],[.1,.1,0,0],[-.1,.1,0,0]]
+        };
+$shape->set_bounds;
+$shape->save($shapefile);
+
+#$shape->dump;
+
+$shape = new Geo::Shapelib $shapefile;
+
+#$shape->dump;
+
+#use Data::Dumper;
+#print Dumper($shape->{Shapes}[0]);
+ok($shape->{Shapes}[0]->{Vertices}[4][0] == -1, 'save multipart, vertices');
+ok($shape->{Shapes}[0]->{Parts}[1][0] == 5, 'save multipart, parts');
 
 system "rm -f $shapefile.*";
 

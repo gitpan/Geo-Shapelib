@@ -12,7 +12,7 @@ use AutoLoader 'AUTOLOAD';
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = '0.17';
+$VERSION = '0.18';
 
 bootstrap Geo::Shapelib $VERSION;
 
@@ -176,14 +176,20 @@ set:
     values, one for each vertex: x, y, z, and m of the vertex. There
     should be at least one vertex in $s. Point has only one vertex.
 
-this is often not used:
+$s->{Parts}:
 
-    $s->{Parts} this is a reference to an array of arrays of two
-    values, one for each part: the index of the first vertex in the
-    vertex array, i.e. the number of vertices in all previous parts in
-    this shape; and the type of the part (not the shapetype): Ring (5)
-    if the shape is not Multipatch. You may leave this value
-    undefined.
+    $s->{Parts} is not needed in simple cases. $s->{Parts} is a
+    reference to an array (a) of arrays (b). There is one (b) array
+    for each part. In a (b) array the first value is an index to the
+    Vertices array denoting the first vertex of that part. The second
+    value is the type of the part (NOTE: not the type of the
+    shape). The type is 5 (Ring) unless the shape is of type
+    Multipatch. The third value is set as the type of the part as a
+    string when reading from a file but the save method requires only
+    the first two values.
+
+    The index of the last vertex of any part is implicitly the index
+    of the next part minus one or the index of the last vertex.
 
 forget these:
 
@@ -295,7 +301,11 @@ conversion, they are not normally needed.
 
 CombineVertices:
 
-    Default is 1. CombineVertices makes each part an array of two elements.
+    Default is 1. CombineVertices is experimental. The default
+    behavior is to put all vertices into the Vertices array and part
+    indexes into the Parts array. If CombineVertices is set to 0 there
+    is no Vertices array and all data goes into the Parts.  Currently
+    setting CombineVertices to 0 breaks saving of shapefiles.
 
 UnhashFields:
 
@@ -477,7 +487,6 @@ sub get_shape {
 	# $shape->{ShapeRecords} = $self->{ShapeRecords}[$i];
 
 	if($self->{CombineVertices}) {
-	    # CombineVertices makes each part an array of two elements
 	    for my $part (@{$shape->{Parts}}) {
 		$part->[2] = $PartTypes{ $part->[1] };
 	    }
@@ -755,6 +764,53 @@ sub set_sizes {
 
 =pod
 
+=head2 Setting the bounds of the shapefile
+
+    $shapefile->set_bounds;
+
+Sets the MinBounds and MaxBounds of all shapes and of the shapefile.
+
+=cut
+
+sub set_bounds {
+    my($self) = @_;
+
+    return unless @{$self->{Shapes}};
+
+    my $first = 1;
+
+    for my $shape (@{$self->{Shapes}}) {
+
+	my @rect;
+	for my $vertex (@{$shape->{Vertices}}) {
+	    $rect[0] = defined($rect[0]) ? min($vertex->[0],$rect[0]) : $vertex->[0];
+	    $rect[1] = defined($rect[1]) ? min($vertex->[1],$rect[1]) : $vertex->[1];
+	    $rect[2] = defined($rect[2]) ? max($vertex->[0],$rect[2]) : $vertex->[0];
+	    $rect[3] = defined($rect[3]) ? max($vertex->[1],$rect[3]) : $vertex->[1];
+	}
+
+	@{$shape->{MinBounds}}[0..1] = @rect[0..1];
+	@{$shape->{MaxBounds}}[0..1] = @rect[2..3];
+
+	if ($first) {
+	    $self->{MinBounds}->[0] = $shape->{MinBounds}->[0];
+	    $self->{MinBounds}->[1] = $shape->{MinBounds}->[1];
+	    $self->{MaxBounds}->[0] = $shape->{MaxBounds}->[0];
+	    $self->{MaxBounds}->[1] = $shape->{MaxBounds}->[1];
+	    $first = 0;
+	} else {
+	    $self->{MinBounds}->[0] = min($self->{MinBounds}->[0],$shape->{MinBounds}->[0]);
+	    $self->{MinBounds}->[1] = min($self->{MinBounds}->[1],$shape->{MinBounds}->[1]);
+	    $self->{MaxBounds}->[0] = max($self->{MaxBounds}->[0],$shape->{MaxBounds}->[0]);
+	    $self->{MaxBounds}->[1] = max($self->{MaxBounds}->[1],$shape->{MaxBounds}->[1]);
+	}
+
+    }
+
+}
+
+=pod
+
 =head2 Saving the shapefile
 
     $shapefile->save($filename);
@@ -764,6 +820,9 @@ $shapefile->{Name} is used if $filename is not specified. If $filename
 is specified it also becomes the new name.
 
 $filename may contain an extension, it is removed and .shp etc. are used instead.
+
+If you are not sure that the bounds of the shapefile are ok, then call
+$shapefile->set_bounds; before saving.
 
 =cut
 
