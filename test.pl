@@ -10,7 +10,7 @@ BEGIN { $| = 1; }
 END {print "not ok 1\n" unless $loaded;}
 
 use Geo::Shapelib qw /:all/;
-use Test::Simple tests => 15;
+use Test::Simple tests => 20;
 
 $loaded = 1;
 
@@ -19,6 +19,23 @@ $loaded = 1;
 # Insert your test code below (better if it prints "ok 13"
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
+
+my $shape = new Geo::Shapelib  { 
+    Shapetype => POLYLINE,
+};
+
+for (0..0) {
+    push @{$shape->{Shapes}}, {
+	Vertices=>[[0,0],[1,1]]
+	};
+}
+for (0..0) {
+    $s = $shape->get_shape($_);
+    @l = $shape->lengths($s);
+    ok(abs($l[0] - sqrt(2)) < 0.00001,'lengths');
+}
+
+my $test;
 
 my $shapefile = 'test_shape';
 
@@ -40,6 +57,10 @@ while (<DATA>) {
 
 ok($shape, 'new from data');
 
+$rec = $shape->get_record_hashref(0);
+
+ok($rec->{Founded} == 19780202, 'get_record_hashref');
+
 $shape->dump("$shapefile.dump");
 
 ok(1, 'dump');
@@ -52,13 +73,19 @@ my $shape2 = new Geo::Shapelib $shapefile, {Rtree=>1};
 
 ok(ref($shape2->{Rtree}) eq 'Tree::R', "Rtree");
 
-ok($shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 
-   $shape2->{Shapes}->[2]->{Vertices}->[0]->[1] and 
-   $shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 6722622, "Rtree seems to work");
+$test = $shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 
+    $shape2->{Shapes}->[2]->{Vertices}->[0]->[1] and 
+    $shape->{Shapes}->[2]->{Vertices}->[0]->[1] == 6722622;
+
+ok($test, 'Rtree seems to work');
 
 $example = "example/xyz";
 
-$shape = new Geo::Shapelib $example;
+$shape = new Geo::Shapelib $example, {Load=>0};
+
+$rec = $shape->get_record_hashref(0);
+
+ok($rec->{Y} == 4235332.51, 'get_record_hashref (unloaded rec)');
 
 $shape->save($shapefile);
 
@@ -67,6 +94,27 @@ for ('.shp','.dbf') {
     @stat2 = stat $shapefile.$_;
     ok($stat1[7] == $stat2[7], "cmp $_ files");
 }
+
+
+$shape = new Geo::Shapelib $example, {Load=>0};
+$shape2 = new Geo::Shapelib {
+    Name => $shapefile,
+    Like => $shape
+};
+$shape2->create();
+for (0..$shape->{NShapes}-1) {
+    $s = $shape->get_shape($_);
+    $r = $shape->get_record($_);
+    $shape2->add($s,$r);
+}
+$shape2->close();
+
+for ('.shp','.dbf') {
+    @stat1 = stat $example.$_;
+    @stat2 = stat $shapefile.$_;
+    ok($stat1[7] == $stat2[7], "cmp $_ files");
+}
+
 
 $shape = new Geo::Shapelib "example/xyz", {UnhashFields => 0};
 

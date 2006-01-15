@@ -62,3 +62,9 @@ Revision history for Perl extension Geo::Shapelib.
 	- in xs: in _CreateObject parts and vertices were not read correctly always, wrote tests for these
 	- edited pod, Parts, CombineVertices
 	- new method set_bounds
+0.19 released Jan 16 2006
+	- new constructor options: Like, Load
+	- get_record_hashref
+	- create, add, close
+	- lengths
+	- some bugfixes related to NShapes
