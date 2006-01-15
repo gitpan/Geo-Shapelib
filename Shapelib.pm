@@ -12,7 +12,7 @@ use AutoLoader 'AUTOLOAD';
 
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = '0.19';
+$VERSION = '0.20';
 
 bootstrap Geo::Shapelib $VERSION;
 
@@ -744,7 +744,10 @@ all shapes, call:
 
 sub Rtree {
     my $self = shift @_;
-    $self->{NShapes} = @{$self->{Shapes}} unless defined $self->{NShapes} and $self->{Shapes};
+    unless (defined $self->{NShapes}) {
+	croak "no shapes" unless $self->{Shapes} and ref $self->{Shapes} eq 'ARRAY' and @{$self->{Shapes}};
+	$self->{NShapes} = @{$self->{Shapes}};
+    }
     $self->{Rtree} = new Tree::R @_;
     for my $sindex (0..$self->{NShapes}-1) {
 	my $shape = get_shape($self, $sindex);
@@ -937,14 +940,12 @@ $shapefile->set_bounds; before saving.
 sub save {
     my($self,$filename) = @_;
 
-    $self->create($filename);
-
-    if ($self->{Shapes}) {
-	croak "Shapes is not an array" unless ref $self->{Shapes} eq 'ARRAY';
+    unless (defined $self->{NShapes}) {
+	croak "no shapes" unless $self->{Shapes} and ref $self->{Shapes} eq 'ARRAY' and @{$self->{Shapes}};
 	$self->{NShapes} = @{$self->{Shapes}};
     }
 
-    croak "no shapes" unless $self->{NShapes};
+    $self->create($filename);
 
     for my $i (0..$self->{NShapes}-1) {
 	my $s = get_shape($self, $i);
@@ -1116,6 +1117,11 @@ shapefile then the reported bounds may be incorrect.
 
 sub dump {
     my ($self,$file) = @_;
+
+    unless (defined $self->{NShapes}) {
+	croak "no shapes" unless $self->{Shapes} and ref $self->{Shapes} eq 'ARRAY' and @{$self->{Shapes}};
+	$self->{NShapes} = @{$self->{Shapes}};
+    }
     
     my $old_select;
     if (defined $file) {
@@ -1145,7 +1151,7 @@ sub dump {
     }
     print "Field names:  ", join(', ', @$fn), "\n";
     print "Field types:  ", join(', ', @$ft), "\n";
-    $self->{NShapes} = @{$self->{Shapes}} unless defined $self->{NShapes} and $self->{Shapes};
+
     print "Number of shapes:  $self->{NShapes}\n";
     
     my $sindex = 0;
